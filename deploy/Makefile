@@ -5,18 +5,10 @@
         api worker frontend test install-frontend install-backend init \
         fetch-data
 
-# Resolve the upstream PMET_project commit SHA so Docker's layer cache
-# invalidates only when upstream actually moves. Only computed for build
-# targets (avoids a network call on `make start` / `make stop` / etc.).
-# Override with `PMET_REF=<sha-or-ref> make build` for reproducible builds
-# or offline work.
-ifneq (,$(filter build rebuild rebuild-backend,$(MAKECMDGOALS)))
-  PMET_REF ?= $(shell git ls-remote https://github.com/duocang/PMET_project.git HEAD 2>/dev/null | cut -f1)
-  ifeq ($(strip $(PMET_REF)),)
-    $(error Cannot resolve PMET_project HEAD SHA. Check network, or pass PMET_REF=<sha> explicitly)
-  endif
-  export PMET_REF
-endif
+# PMET binaries are built from the in-repo core/ sources during
+# `docker build` (apps/pmet_backend/Dockerfile copies core/ and runs
+# build_all.sh). No upstream-SHA pinning is needed; the layer cache
+# busts when core/ changes.
 
 help:
 	@echo "PMET commands"
@@ -55,7 +47,7 @@ stop:
 	docker-compose down
 
 build:
-	@echo "Building with PMET_REF=$(PMET_REF)"
+	@echo "Building images from local core/"
 	docker-compose build
 
 clean:
@@ -71,7 +63,7 @@ logs:
 
 # Rebuild and restart everything. Always correct, just slower.
 rebuild:
-	@echo "Building with PMET_REF=$(PMET_REF)"
+	@echo "Building images from local core/"
 	docker-compose build
 	docker-compose up -d
 
@@ -87,7 +79,7 @@ rebuild-frontend:
 # Only needed when pmet_backend/Dockerfile or requirements.txt change.
 # For normal Python edits use restart-worker (or nothing, for api).
 rebuild-backend:
-	@echo "Building with PMET_REF=$(PMET_REF)"
+	@echo "Building images from local core/"
 	docker-compose build api
 	docker-compose up -d api worker
 
@@ -111,22 +103,22 @@ restart:
 # -------------------------------------------------------------------------
 
 api:
-	cd pmet_backend && uvicorn api.main:app --reload --port 8000
+	cd ../apps/pmet_backend && uvicorn api.main:app --reload --port 8000
 
 worker:
-	cd pmet_backend && celery -A worker.celery_app worker --loglevel=info
+	cd ../apps/pmet_backend && celery -A worker.celery_app worker --loglevel=info
 
 frontend:
-	cd pmet_frontend && npm run dev
+	cd ../apps/pmet_frontend && npm run dev
 
 test:
-	cd pmet_backend && python test_api.py
+	cd ../apps/pmet_backend && python test_api.py
 
 install-frontend:
-	cd pmet_frontend && npm install
+	cd ../apps/pmet_frontend && npm install
 
 install-backend:
-	pip install -r pmet_backend/requirements.txt
+	pip install -r ../apps/pmet_backend/requirements.txt
 
 init:
 	make install-backend
@@ -137,4 +129,4 @@ init:
 # the host (not inside Docker): data/ is bind-mounted into the api and
 # worker containers, so the downloads appear there without rebuilding.
 fetch-data:
-	bash scripts/download_pmet_data.sh
+	bash ../pipeline/data/download_pmet_data.sh

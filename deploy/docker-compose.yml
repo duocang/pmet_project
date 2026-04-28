@@ -11,8 +11,8 @@ services:
 
   api:
     build:
-      context: .
-      dockerfile: pmet_backend/Dockerfile
+      context: ../
+      dockerfile: apps/pmet_backend/Dockerfile
       args:
         PMET_REF: ${PMET_REF:-main}
     environment:
@@ -24,9 +24,9 @@ services:
       # (GB-scale inputs / job outputs) that must stay on the host. Everything
       # else — scripts/, nginx/, compiled PMET binaries — is baked into the
       # image so the container is self-contained.
-      - ./pmet_backend:/app/pmet_backend
-      - ./scripts:/app/scripts
-      - ./data:/app/data
+      - ../apps/pmet_backend:/app/pmet_backend
+      - ../pipeline:/app/pipeline
+      - ../data:/app/data
       - ./result:/app/result
     depends_on:
       redis:
@@ -35,17 +35,17 @@ services:
 
   worker:
     build:
-      context: .
-      dockerfile: pmet_backend/Dockerfile
+      context: ../
+      dockerfile: apps/pmet_backend/Dockerfile
       args:
         PMET_REF: ${PMET_REF:-main}
     environment:
       - REDIS_URL=redis://redis:6379/0
       - PMET_WORKERS=2
     volumes:
-      - ./pmet_backend:/app/pmet_backend
-      - ./scripts:/app/scripts
-      - ./data:/app/data
+      - ../apps/pmet_backend:/app/pmet_backend
+      - ../pipeline:/app/pipeline
+      - ../data:/app/data
       - ./result:/app/result
     depends_on:
       redis:
@@ -54,7 +54,7 @@ services:
 
   frontend:
     build:
-      context: ./pmet_frontend
+      context: ../apps/pmet_frontend
       dockerfile: Dockerfile
     depends_on:
       - api
