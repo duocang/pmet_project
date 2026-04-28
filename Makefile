@@ -52,6 +52,26 @@ clean:
 # All targets accept the same env vars as the underlying compose commands.
 
 up:
+	@# 1. Stop our own compose project cleanly (no-op if nothing running).
+	@$(MAKE) -C deploy stop 2>/dev/null || true
+	@# 2. If any *other* docker container is still publishing :5960 — typically
+	@#    a leftover from the pre-monorepo `pmet_shiny_app` compose project —
+	@#    stop and remove it so the new stack can bind the port.
+	@blockers=$$(docker ps --filter "publish=5960" --format "{{.Names}}" 2>/dev/null); \
+	if [ -n "$$blockers" ]; then \
+		echo "Stopping leftover containers on :5960 — $$blockers"; \
+		echo "$$blockers" | xargs -n1 docker stop >/dev/null; \
+		echo "$$blockers" | xargs -n1 docker rm   >/dev/null 2>&1 || true; \
+	fi
+	@# 3. If the port is *still* bound (some non-docker host process), bail
+	@#    out with a clear diagnostic instead of failing inside docker.
+	@if lsof -nP -iTCP:5960 -sTCP:LISTEN >/dev/null 2>&1; then \
+		echo "ERROR: port 5960 is held by a non-docker host process:"; \
+		lsof -nP -iTCP:5960 -sTCP:LISTEN; \
+		echo ""; \
+		echo "Free it manually, or change the host port in deploy/docker-compose.yml."; \
+		exit 1; \
+	fi
 	@$(MAKE) -C deploy build
 	@$(MAKE) -C deploy start
 	@echo ""
