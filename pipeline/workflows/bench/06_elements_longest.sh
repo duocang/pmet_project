@@ -14,4 +14,4 @@ res_dir=results/06_elements_longest
 delete_temp=no
 purpose_text="Search motif pairs on the longest isoform of any genomic element"
 
-source "$script_dir/scripts/pipeline/_elements_common.sh"
+source "$script_dir/pipeline/workflows/bench/_elements_common.sh"
