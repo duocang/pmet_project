@@ -1,10 +1,27 @@
 from pathlib import Path
 from dataclasses import dataclass
 
+
+def _detect_project_root() -> Path:
+    """Find the repo root from this file's location.
+
+    Two layouts must both work:
+      - host monorepo: apps/pmet_backend/config.py  ->  3 ups
+      - docker mount:  /app/pmet_backend/config.py  ->  2 ups
+    Pick whichever ancestor has a data/ sibling.
+    """
+    here = Path(__file__).resolve()
+    for ups in (3, 2):
+        cand = here.parents[ups - 1]
+        if (cand / "data").is_dir():
+            return cand
+    # Fall back to the docker layout if neither matched (fresh setup).
+    return here.parents[1]
+
+
 @dataclass
 class Config:
-    # Repo root: apps/backend/config.py -> ../../.. = repo root.
-    PROJECT_ROOT: Path = Path(__file__).resolve().parent.parent.parent
+    PROJECT_ROOT: Path = _detect_project_root()
     RESULT_DIR: Path = PROJECT_ROOT / "result"
     # Read-only catalog of pre-computed species/motif databases, populated by
     # pipeline/data/download_pmet_data.sh. Layout: <species>/<motif_db>/.
