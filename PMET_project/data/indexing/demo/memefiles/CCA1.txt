@@ -1,0 +1,33 @@
+MEME version 5.4.1 (Tue Mar 1 19:18:48 2022 -0800)
+
+ALPHABET= ACGT
+
+strands: + -
+
+Background letter frequencies (from uniform background):
+A 0.25000 C 0.25000 G 0.25000 T 0.25000 
+
+MOTIF CCA1 CCA1
+
+log-odds matrix: alength= 4 w= 8 E= 0
+   190	  -783	  -464	  -220	
+   194	  -829	  -274	  -683	
+   198	  -583	  -472	  -783	
+  -284	 -1029	  -567	   194	
+   199	  -576	  -783	  -690	
+  -783	  -433	  -797	   198	
+  -573	   199	  -929	  -604	
+  -356	  -146	  -413	   181	
+
+letter-probability matrix: alength= 4 w= 8 nsites= 20 E= 0
+  0.934493	  0.001100	  0.010001	  0.054405	
+  0.959700	  0.000800	  0.037300	  0.002200	
+  0.985000	  0.004400	  0.009500	  0.001100	
+  0.035000	  0.000200	  0.004900	  0.959900	
+  0.992200	  0.004600	  0.001100	  0.002100	
+  0.001100	  0.012399	  0.001000	  0.985501	
+  0.004700	  0.991100	  0.000400	  0.003800	
+  0.021198	  0.090791	  0.014299	  0.873713	
+
+URL http://floresta.eead.csic.es/footprintdb/index.php?db=ArabidopsisPBM:20140210&motif=CCA1
+

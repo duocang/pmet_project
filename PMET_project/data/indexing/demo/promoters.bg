@@ -1,0 +1,7 @@
+# 0-order Markov frequencies from file results/homotypic_promoters/promoters.fa
+# seqs: 26558    min: 1    max: 14813    avg: 939.5    sum: 24950557    alph: DNA
+# order 0
+A 3.419e-01
+C 1.581e-01
+G 1.581e-01
+T 3.419e-01

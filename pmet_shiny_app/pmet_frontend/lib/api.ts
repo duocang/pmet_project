@@ -1,0 +1,151 @@
+import axios from 'axios';
+import { TaskCreate, TaskResponse, TaskListResponse, UploadResponse } from './types';
+
+// Empty string = same-origin. In docker/nginx deployment the app is served on
+// :80 and nginx proxies /api/* to the backend. In local dev, set
+// NEXT_PUBLIC_API_URL=http://localhost:8000 when frontend runs on :3000.
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
+
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export const taskApi = {
+  create: async (task: TaskCreate): Promise<TaskResponse> => {
+    const response = await api.post('/api/tasks', task);
+    return response.data;
+  },
+
+  get: async (taskId: string): Promise<TaskResponse> => {
+    const response = await api.get(`/api/tasks/${taskId}`);
+    return response.data;
+  },
+
+  list: async (email?: string, limit = 50, offset = 0): Promise<TaskListResponse> => {
+    const params = new URLSearchParams();
+    if (email) params.append('email', email);
+    params.append('limit', String(limit));
+    params.append('offset', String(offset));
+    const response = await api.get(`/api/tasks?${params.toString()}`);
+    return response.data;
+  },
+
+  downloadResult: (taskId: string): string => {
+    return `${API_URL}/api/tasks/${taskId}/result`;
+  },
+};
+
+export const resultsApi = {
+  get: async (taskId: string, params?: {
+    cluster?: string;
+    p_adj_max?: number;
+    limit?: number;
+    offset?: number;
+  }) => {
+    const query = new URLSearchParams();
+    if (params?.cluster) query.append('cluster', params.cluster);
+    if (params?.p_adj_max !== undefined) query.append('p_adj_max', String(params.p_adj_max));
+    if (params?.limit !== undefined) query.append('limit', String(params.limit));
+    if (params?.offset !== undefined) query.append('offset', String(params.offset));
+    const qs = query.toString();
+    const response = await api.get(`/api/results/${taskId}${qs ? '?' + qs : ''}`);
+    return response.data;
+  },
+
+  summary: async (taskId: string) => {
+    const response = await api.get(`/api/results/${taskId}/summary`);
+    return response.data;
+  },
+
+  genesUsed: async (taskId: string) => {
+    const response = await api.get(`/api/results/${taskId}/genes-used`);
+    return response.data;
+  },
+};
+
+export interface IndexingFixedParams {
+  promoter_length?: number;
+  promoter_num?: number;
+  max_match?: number;
+  fimo_threshold?: number;
+  ic_threshold?: number;
+  utr5?: string;
+  promoters_overlap?: string;
+}
+
+export interface IndexingEntry {
+  value: string;
+  species: string;
+  motif_db: string;
+  label: string;
+  fixed_params?: IndexingFixedParams;
+}
+
+export interface IndexingSpeciesDetail {
+  name: string;
+  humanized: string;
+  description: string | null;
+  genome_name: string | null;
+  genome_link: string | null;
+  annotation_name: string | null;
+  annotation_link: string | null;
+  gene_count: number;
+  gene_sample: string[];
+}
+
+export interface IndexingMotifDbDetail {
+  name: string;
+  humanized: string;
+  source_link: string | null;
+  motif_count: number;
+  motif_sample: string[];
+}
+
+export const indexingApi = {
+  list: async (): Promise<{ entries: IndexingEntry[] }> => {
+    const response = await api.get('/api/indexing');
+    return response.data;
+  },
+
+  speciesDetail: async (species: string): Promise<{ species: IndexingSpeciesDetail }> => {
+    const response = await api.get(`/api/indexing/${encodeURIComponent(species)}`);
+    return response.data;
+  },
+
+  motifDbDetail: async (species: string, motifDb: string): Promise<{ motif_db: IndexingMotifDbDetail }> => {
+    const response = await api.get(
+      `/api/indexing/${encodeURIComponent(species)}/${encodeURIComponent(motifDb)}`,
+    );
+    return response.data;
+  },
+};
+
+export const fileApi = {
+  upload: async (file: File, fileType: string, taskId?: string): Promise<UploadResponse> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('file_type', fileType);
+    if (taskId) formData.append('task_id', taskId);
+
+    const response = await api.post('/api/files/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  uploadMultiple: async (files: File[], taskId?: string): Promise<{ files: UploadResponse[] }> => {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+    if (taskId) formData.append('task_id', taskId);
+
+    const response = await api.post('/api/files/upload-multiple', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+};
+
+export default api;

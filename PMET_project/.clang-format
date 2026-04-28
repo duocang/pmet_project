@@ -1,0 +1,50 @@
+# PMET project clang-format config.
+# Goal: codify the style the project already mostly follows so future
+# contributions stay consistent. Anchored to LLVM, with the few overrides
+# the existing PMET code already uses.
+#
+# Apply only to PMET-owned source. Do NOT format the upstream MEME Suite
+# code under src/indexing/fused_fimo/src/fimo/* (everything except fimo.c
+# and pmet-sequence-library.c there is third-party and out of scope).
+
+BasedOnStyle: LLVM
+
+# Indentation: project uses 2 spaces (repo-guide.md global rule + existing code).
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+ContinuationIndentWidth: 4
+
+# Line length: existing PMET code wraps around 120, not 80.
+ColumnLimit: 120
+
+# Braces: existing code uses Attach style ("if (...) {").
+BreakBeforeBraces: Attach
+
+# Pointer/reference style: existing code uses "T* x" / "T& x" (left-aligned).
+PointerAlignment: Left
+ReferenceAlignment: Left
+
+# Don't reflow string literals or comments — comments often contain ASCII
+# diagrams or aligned columns we want to keep.
+ReflowComments: false
+
+# Includes: leave the existing grouping order (we already grouped them
+# system / pmet by hand). Sort within each block alphabetically.
+SortIncludes: CaseSensitive
+IncludeBlocks: Preserve
+
+# Misc readability tweaks the current code already prefers.
+AllowShortIfStatementsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Empty
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+SpaceBeforeCpp11BracedList: false
+Cpp11BracedListStyle: true
+
+# Penalties: don't break a long parameter list onto each line if it can
+# stay under ColumnLimit.
+PenaltyBreakAssignment: 50
+PenaltyExcessCharacter: 1000000

@@ -1,0 +1,66 @@
+MEME version 4.4
+
+ALPHABET= ACGT
+
+strands: + -
+
+Background letter frequencies (from /mnt/thumper-e1/home/shhuang/projects/dap/analysis.v4/gem07_rep_memechip03/ABI3VP1_tnt/AT5G18090_col_a/background):
+A 0.30000 C 0.20000 G 0.20000 T 0.30000
+
+MOTIF Random1 AT5G18090
+
+letter-probability matrix: alength= 4 w= 10 nsites= 147 E= 2.1e-117
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+
+
+MOTIF Random2 AT5G18090
+
+letter-probability matrix: alength= 4 w= 4 nsites= 147 E= 2.1e-117
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+
+
+MOTIF Random3 AT5G18090
+
+letter-probability matrix: alength= 4 w= 5 nsites= 147 E= 2.1e-117
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+
+MOTIF Random4 AT5G18090
+
+letter-probability matrix: alength= 4 w= 6 nsites= 147 E= 2.1e-117
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+
+MOTIF Random5 AT5G18090
+
+letter-probability matrix: alength= 4 w= 11 nsites= 147 E= 2.1e-117
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25
+  0.25	  0.25	  0.25	  0.25

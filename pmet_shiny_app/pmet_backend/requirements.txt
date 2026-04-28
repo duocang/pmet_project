@@ -1,0 +1,18 @@
+# FastAPI and dependencies
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+pydantic[email]>=2.5.0
+
+# Celery and Redis
+celery>=5.3.0
+redis>=5.0.0
+
+# Data processing — used by both the backend (pandas) and the PMET shell
+# pipeline's Python helpers (numpy pulled in transitively via pandas,
+# biopython required by deduplicate.py and parse_promoter_lengths_from_fasta.py).
+pandas>=2.0.0
+biopython>=1.83
+
+# Development
+python-dotenv>=1.0.0

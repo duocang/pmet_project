@@ -1,0 +1,21 @@
+# Host node_modules must not be copied in — it has host-arch binaries and
+# would overwrite the freshly-installed Linux ones right after npm install.
+node_modules/
+.next/
+tsconfig.tsbuildinfo
+
+# Local env + dev artifacts
+.env*.local
+*.log
+npm-debug.log*
+
+# Git / OS / IDE
+.git/
+.gitignore
+.DS_Store
+.vscode/
+.idea/
+
+# Dockerfile itself — read out-of-band by the daemon, no need to tar it
+Dockerfile
+.dockerignore

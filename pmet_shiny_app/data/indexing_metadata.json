@@ -1,0 +1,202 @@
+{
+  "_note": "Parameters the pre-computed PMET indexes were built with. Keys are species directory names under data/indexing/. Values are shown as read-only 'Fixed parameters' in the submit form. Edit freely; changes are picked up on the next page load (no restart needed). Defaults below assume the Zenodo 8435321 build pipeline — verify and override if you rebuild an index with different settings. Optional nested key 'by_motif_db' lets you override per motif database.",
+  "_fields": {
+    "promoter_length": "int (bp used when extracting promoter sequences)",
+    "promoter_num": "int (size of the promoter universe used by FIMO)",
+    "max_match": "int (top-k FIMO hits per gene baked into pair index)",
+    "fimo_threshold": "float (FIMO p-value cutoff used when the index was built)",
+    "ic_threshold": "int (IC filter applied by pair_parallel; runtime-configurable but normally left at the build-time value)",
+    "utr5": "'Yes' | 'No' (whether 5' UTR was included in the promoter)",
+    "promoters_overlap": "'NoOverlap' | 'AllowOverlap' (overlap handling)"
+  },
+
+  "Arabidopsis_thaliana": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  },
+  "Brachypodium_distachyon": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  },
+  "Brassica_napus": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  },
+  "Glycine_max": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  },
+  "Hordeum_vulgare_goldenpromise": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  },
+  "Hordeum_vulgare_Morex_V3": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  },
+  "Hordeum_vulgare_R1": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  },
+  "Hordeum_vulgare_v082214v1": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  },
+  "Medicago_truncatula": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  },
+  "Oryza_sativa_indica_9311": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  },
+  "Oryza_sativa_indica_IR8": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  },
+  "Oryza_sativa_indica_MH63": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  },
+  "Oryza_sativa_indica_ZS97": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  },
+  "Oryza_sativa_japonica_Ensembl": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  },
+  "Oryza_sativa_japonica_Kitaake": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  },
+  "Oryza_sativa_japonica_Nipponbare": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  },
+  "Oryza_sativa_japonica_V7.1": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  },
+  "Solanum_lycopersicum": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  },
+  "Solanum_tuberosum": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  },
+  "Triticum_aestivum": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  },
+  "Zea_mays": {
+    "promoter_length": 1000,
+    "promoter_num": 5000,
+    "max_match": 5,
+    "fimo_threshold": 0.05,
+    "ic_threshold": 4,
+    "utr5": "Yes",
+    "promoters_overlap": "NoOverlap"
+  }
+}

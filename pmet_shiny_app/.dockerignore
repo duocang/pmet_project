@@ -1,0 +1,37 @@
+# .dockerignore for the backend build context (context: .).
+# Pmet_frontend has its own build context and ignores this file.
+
+# Pre-computed PMET indexing archives (GB-scale). Served at runtime via the
+# .:/app bind mount in docker-compose.yml, never needed at image-build time.
+data/
+
+# Runtime task outputs
+result/
+
+# Legacy stack — not used by the FastAPI rewrite
+legacy/
+
+# Frontend has its own build context; exclude from backend context to keep
+# build uploads small and avoid copying host-arch node_modules.
+pmet_frontend/
+
+# Docs and local-only artifacts
+*.md
+memory/
+.git/
+.gitignore
+
+# Python bytecode / caches
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
+

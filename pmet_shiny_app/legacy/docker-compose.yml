@@ -1,0 +1,38 @@
+x-yml-version: '3.8'
+
+services:
+  shiny-app:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.shiny
+    container_name: shiny
+    user: "1000:1000"
+    volumes:
+      # - ./data/indexing:/home/shiny/PMET_docker/data/indexing
+      # - ./result:/home/shiny/PMET_docker/result
+      # - ./logs:/var/log/shiny-server
+      - ./result:/srv/shiny-server/pmet/result
+    ports:
+      - "4615:4615"
+    networks:
+      - app-network
+
+  nginx-server:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.nginx
+    container_name: nginx
+    volumes:
+      - ./result:/etc/nginx/html
+    ports:
+      - "19258:19258"
+    restart: always
+    networks:
+      - app-network
+
+volumes:
+  logs:
+  result:
+
+networks:
+  app-network:
