@@ -9,17 +9,17 @@
 #
 # Stages:
 #   [1] Homotypic — genome/annotation prep -> promoter BED -> FIMO + pmetindex
-#       via build/index_fimo_fused (delegated to scripts/python/run_homotypic.py)
+#       via build/index_fimo_fused (delegated to pipeline/python/run_homotypic.py)
 #   [2] Heterotypic — pair_parallel consumes the index
 #   [3] Heatmaps — three R-rendered views
 # ==============================================================================
 
 set -euo pipefail
 
-script_dir=$(cd -- "$(dirname "$0")/../.." && pwd)
+script_dir=$(cd -- "$(dirname "$0")/../../.." && pwd)
 cd "$script_dir"
-source scripts/lib/print_colors.sh
-source scripts/lib/timer.sh
+source pipeline/lib/print_colors.sh
+source pipeline/lib/timer.sh
 
 # ==================== Helpers ====================
 
@@ -164,7 +164,7 @@ stripped="$homotypic_output/genome_stripped.fa"
 
 if [[ ! -s "$genome" || ! -s "$anno" ]]; then
     print_green "Downloading genome and annotation..."
-    bash scripts/fetch_tair10.sh
+    bash pipeline/data/fetch_tair10.sh
 fi
 
 check_file "$genome" "Genome"
@@ -274,7 +274,7 @@ rm -f "${shards[@]}"
 
 print_green "\n[3/3] Generating heatmaps..."
 
-draw() { Rscript scripts/r/draw_heatmap.R "$@"; }
+draw() { Rscript pipeline/r/draw_heatmap.R "$@"; }
 
 draw All     "$plot_output/heatmap.png"                "$heterotypic_output/motif_output.txt" 5 3 6 FALSE
 draw Overlap "$plot_output/heatmap_overlap_unique.png" "$heterotypic_output/motif_output.txt" 5 3 6 TRUE

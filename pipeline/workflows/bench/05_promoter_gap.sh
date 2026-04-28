@@ -15,10 +15,10 @@
 
 set -euo pipefail
 
-script_dir=$(cd -- "$(dirname "$0")/../.." && pwd)
+script_dir=$(cd -- "$(dirname "$0")/../../.." && pwd)
 cd "$script_dir"
-source scripts/lib/print_colors.sh
-source scripts/lib/timer.sh
+source pipeline/lib/print_colors.sh
+source pipeline/lib/timer.sh
 
 # ==================== Configuration ====================
 
@@ -113,7 +113,7 @@ filter_short_promoters() {
 
 if [[ ! -s "$genome" || ! -s "$anno" ]]; then
     print_green "Downloading genome and annotation..."
-    bash scripts/fetch_tair10.sh
+    bash pipeline/data/fetch_tair10.sh
 fi
 
 check_file "$genome" "Genome"
@@ -205,7 +205,7 @@ rm -f "$heterotypic_output"/temp*.txt
 
 print_green "\n[3/3] Generating heatmaps..."
 
-draw() { Rscript scripts/r/draw_heatmap.R "$@"; }
+draw() { Rscript pipeline/r/draw_heatmap.R "$@"; }
 
 draw All     "$plot_output/heatmap.png"                "$heterotypic_output/motif_output.txt" 5 3 6 FALSE
 draw Overlap "$plot_output/heatmap_overlap_unique.png" "$heterotypic_output/motif_output.txt" 5 3 6 TRUE

@@ -26,10 +26,10 @@
 
 set -euo pipefail
 
-script_dir=$(cd -- "$(dirname "$0")/../.." && pwd)
+script_dir=$(cd -- "$(dirname "$0")/../../.." && pwd)
 cd "$script_dir"
-source scripts/lib/print_colors.sh
-source scripts/lib/timer.sh
+source pipeline/lib/print_colors.sh
+source pipeline/lib/timer.sh
 
 # ==================== Helpers ====================
 
@@ -178,7 +178,7 @@ print_green "\n[2/2] Generating heatmaps..."
 if ! command -v Rscript >/dev/null 2>&1; then
     print_orange "   Rscript not found — skipping heatmaps. Main output (motif_output.txt) is unaffected."
 else
-    draw() { Rscript scripts/r/draw_heatmap.R "$@"; }
+    draw() { Rscript pipeline/r/draw_heatmap.R "$@"; }
     draw All     "$plot_output/heatmap.png"                "$output_dir/motif_output.txt" 5 3 6 FALSE
     draw Overlap "$plot_output/heatmap_overlap_unique.png" "$output_dir/motif_output.txt" 5 3 6 TRUE
     draw Overlap "$plot_output/heatmap_overlap.png"        "$output_dir/motif_output.txt" 5 3 6 FALSE

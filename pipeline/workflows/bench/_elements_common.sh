@@ -12,11 +12,11 @@
 # of the cleanup roadmap; verified byte-identical against the recorded
 # 06 / 07 baselines.
 
-source "$script_dir/scripts/lib/print_colors.sh"
-source "$script_dir/scripts/lib/timer.sh"
+source "$script_dir/pipeline/lib/print_colors.sh"
+source "$script_dir/pipeline/lib/timer.sh"
 
 data_dir="$script_dir/data"
-fetch_script="$script_dir/scripts/fetch_tair10.sh"
+fetch_script="$script_dir/pipeline/data/fetch_tair10.sh"
 
 echo -e "\n\n"
 print_middle "$purpose_text"
@@ -34,9 +34,9 @@ fi
 start_time=$SECONDS
 ################################ 2. input parameters ###################################
 # tool
-toolDir=scripts
+toolDir=pipeline
 HOMOTYPIC=$toolDir/indexing/pmet_index_element.sh
-HETEROTYPIC=build/pmetParallel
+HETEROTYPIC=build/pair_parallel
 
 threads=8
 
@@ -149,7 +149,7 @@ for task in "salt_top300" "random_genes_300" "genes_cell_type_treatment" "gene_c
     rm -f $heterotypic_output/motif_output.txt
     concat_tmp=$(mktemp)
     cat $heterotypic_output/*.txt > "$concat_tmp"
-    # `-f`: pmetParallel does not always emit temp*.txt files (depends on
+    # `-f`: pair_parallel does not always emit temp*.txt files (depends on
     # whether any temp scratch survived); without it the rm fails under
     # `set -e` with "No such file or directory".
     rm -f $heterotypic_output/temp*.txt
@@ -162,7 +162,7 @@ for task in "salt_top300" "random_genes_300" "genes_cell_type_treatment" "gene_c
     ##################################### Heatmap ##################################
     print_green "\n\nCreating heatmap...\n"
 
-    Rscript scripts/r/draw_heatmap.R            \
+    Rscript pipeline/r/draw_heatmap.R            \
         All                                     \
         $plot_output/heatmap.png                \
         $heterotypic_output/motif_output.txt    \
@@ -171,7 +171,7 @@ for task in "salt_top300" "random_genes_300" "genes_cell_type_treatment" "gene_c
         6                                       \
         FALSE
 
-    Rscript scripts/r/draw_heatmap.R            \
+    Rscript pipeline/r/draw_heatmap.R            \
         Overlap                                 \
         $plot_output/heatmap_overlap_unique.png \
         $heterotypic_output/motif_output.txt    \
@@ -180,7 +180,7 @@ for task in "salt_top300" "random_genes_300" "genes_cell_type_treatment" "gene_c
         6                                       \
         TRUE
 
-    Rscript scripts/r/draw_heatmap.R            \
+    Rscript pipeline/r/draw_heatmap.R            \
         Overlap                                 \
         $plot_output/heatmap_overlap.png        \
         $heterotypic_output/motif_output.txt    \

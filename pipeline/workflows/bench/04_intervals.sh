@@ -19,8 +19,8 @@ set -euo pipefail
 
 script_dir=$(cd -- "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 cd "$script_dir"
-source scripts/lib/print_colors.sh
-source scripts/lib/timer.sh
+source pipeline/lib/print_colors.sh
+source pipeline/lib/timer.sh
 
 PY=scripts/python
 
@@ -247,7 +247,7 @@ done
 
 print_green "\n[3/3] Generating heatmap..."
 
-Rscript scripts/r/draw_heatmap.R                       \
+Rscript pipeline/r/draw_heatmap.R                       \
     Overlap                                \
     "$heterotypic_output/heatmap.png"      \
     "$heterotypic_output/motif_output.txt" \

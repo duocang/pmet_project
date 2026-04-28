@@ -13,7 +13,7 @@
 
 set -euo pipefail
 
-script_dir=$(cd -- "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+script_dir=$(cd -- "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)
 
 usage() {
     cat >&2 <<'EOF'
@@ -154,7 +154,7 @@ echo "[2/2] Generating heatmaps..."
 if ! command -v Rscript >/dev/null 2>&1; then
     echo "   Rscript not found — skipping heatmaps. Main output (motif_output.txt) is unaffected." >&2
 else
-    draw() { Rscript scripts/r/draw_heatmap.R "$@"; }
+    draw() { Rscript pipeline/r/draw_heatmap.R "$@"; }
     draw All     "$plot_output/heatmap.png"                "$outputdir/motif_output.txt" 5 3 6 FALSE
     draw Overlap "$plot_output/heatmap_overlap_unique.png" "$outputdir/motif_output.txt" 5 3 6 TRUE
     draw Overlap "$plot_output/heatmap_overlap.png"        "$outputdir/motif_output.txt" 5 3 6 FALSE

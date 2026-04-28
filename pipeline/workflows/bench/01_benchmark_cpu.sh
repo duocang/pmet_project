@@ -2,14 +2,14 @@
 # ==============================================================================
 # Pipeline 01: CPU benchmark — heterotypic search on a precomputed promoter
 # index, comparing single-CPU (build/pmet) against multi-threaded
-# (build/pmetParallel).
+# (build/pair_parallel).
 # ==============================================================================
 
 set -euo pipefail
 
-script_dir=$(cd -- "$(dirname "$0")/../.." && pwd)
+script_dir=$(cd -- "$(dirname "$0")/../../.." && pwd)
 cd "$script_dir"
-source scripts/lib/print_colors.sh
+source pipeline/lib/print_colors.sh
 
 # ==================== Configuration ====================
 
@@ -24,7 +24,7 @@ gene_input_file=data/genes/genes_cell_type_treatment.txt
 parallel_threads=2
 icthresh=4
 
-# Heatmap parameters (must match scripts/r/draw_heatmap.R signature: 7 args).
+# Heatmap parameters (must match pipeline/r/draw_heatmap.R signature: 7 args).
 # Mirrors the defaults pipeline/03 uses for "Overlap" plots.
 heatmap_topn=5
 heatmap_ncol=3
@@ -37,7 +37,7 @@ trap 'rm -f "$temp_genes"' EXIT
 # ==================== Shared runner ====================
 # Run one heterotypic pass with the given binary into $output/<subdir>, then
 # consolidate per-motif hits and draw the heatmap. Extra arguments after the
-# subdir are forwarded verbatim to the binary (e.g. -t for pmetParallel).
+# subdir are forwarded verbatim to the binary (e.g. -t for pair_parallel).
 
 run_pmet_pass() {
     local binary="$1"
@@ -62,7 +62,7 @@ run_pmet_pass() {
         "$@"
 
     # `build/pmet` writes a single $out_dir/motif_output.txt directly.
-    # `build/pmetParallel` writes per-cluster .txt files; concatenate them.
+    # `build/pair_parallel` writes per-cluster .txt files; concatenate them.
     # In the latter case, redirecting into $out_dir/motif_output.txt while
     # the glob `$out_dir/*.txt` still contains it would self-clobber, so
     # build the consolidated file via mktemp first.
@@ -82,7 +82,7 @@ run_pmet_pass() {
             ;;
     esac
 
-    Rscript scripts/r/draw_heatmap.R    \
+    Rscript pipeline/r/draw_heatmap.R    \
         Overlap                         \
         "$out_dir/heatmap.png"          \
         "$out_dir/motif_output.txt"     \
@@ -97,5 +97,5 @@ print_green "Searching for heterotypic motif hits with single CPU..."
 run_pmet_pass build/pmet single
 
 # ==================== Parallel ====================
-print_green "Searching for heterotypic motif hits with pmetParallel..."
-run_pmet_pass build/pmetParallel parallel -t "$parallel_threads"
+print_green "Searching for heterotypic motif hits with pair_parallel..."
+run_pmet_pass build/pair_parallel parallel -t "$parallel_threads"

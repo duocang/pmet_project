@@ -7,12 +7,12 @@
 
 set -euo pipefail
 
-script_dir=$(cd -- "$(dirname "$0")" && pwd)
-pipeline_dir="$script_dir/scripts/pipeline"
+script_dir=$(cd -- "$(dirname "$0")/../.." && pwd)
+pipeline_dir="$script_dir/pipeline/workflows/bench"
 
 # Load color helpers
-if [ -f "$script_dir/scripts/lib/print_colors.sh" ]; then
-    source "$script_dir/scripts/lib/print_colors.sh"
+if [ -f "$script_dir/pipeline/lib/print_colors.sh" ]; then
+    source "$script_dir/pipeline/lib/print_colors.sh"
 else
     print_green()  { printf "\033[32m%s\033[0m\n" "$1"; }
     print_orange() { printf "\033[33m%s\033[0m\n" "$1"; }

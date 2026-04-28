@@ -20,7 +20,7 @@
 
 set -euo pipefail
 
-script_dir=$(cd -- "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+script_dir=$(cd -- "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)
 
 usage() {
     cat >&2 <<'EOF'
@@ -100,7 +100,7 @@ cd "$script_dir"
 : "${pairing_output:=$res_dir/02_pairing}"
 plot_output="$pairing_output/plot"
 
-PY=scripts/python
+PY=pipeline/python
 
 # ==================== Locate binaries ====================
 
@@ -162,12 +162,9 @@ rm -f "$indexing_output/no_duplicates.fa"
 # Background model.
 fasta-get-markov "$genome_sanitized" > "$indexing_output/genome.bg"
 
-# Per-motif MEME split — only needed by calculateICfrommeme_IC_to_csv.py.
-# index_fimo_fused itself reads the original MEME file directly.
-mkdir -p "$indexing_output/memefiles" "$indexing_output/fimohits"
-python3 "$PY/parse_memefile.py" "$meme" "$indexing_output/memefiles/"
+mkdir -p "$indexing_output/fimohits"
 python3 "$PY/calculateICfrommeme_IC_to_csv.py" \
-    "$indexing_output/memefiles/" \
+    "$meme" \
     "$indexing_output/IC.txt"
 
 nummotifs=$(grep -c '^MOTIF' "$meme")
@@ -265,7 +262,7 @@ echo "[3/3] Generating heatmaps..."
 if ! command -v Rscript >/dev/null 2>&1; then
     echo "   Rscript not found — skipping heatmaps. Main output (motif_output.txt) is unaffected." >&2
 else
-    draw() { Rscript scripts/r/draw_heatmap.R "$@"; }
+    draw() { Rscript pipeline/r/draw_heatmap.R "$@"; }
     draw All     "$plot_output/heatmap.png"                "$pairing_output/motif_output.txt" 5 3 6 FALSE
     draw Overlap "$plot_output/heatmap_overlap_unique.png" "$pairing_output/motif_output.txt" 5 3 6 TRUE
     draw Overlap "$plot_output/heatmap_overlap.png"        "$pairing_output/motif_output.txt" 5 3 6 FALSE

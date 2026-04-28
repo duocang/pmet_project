@@ -19,7 +19,7 @@
 
 set -euo pipefail
 
-script_dir=$(cd -- "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+script_dir=$(cd -- "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)
 
 usage() {
     cat >&2 <<'EOF'
@@ -137,14 +137,14 @@ done
 BIN_INDEX="$BIN_DIR/index_fimo_fused"
 BIN_PMET="$BIN_DIR/pair_parallel"
 
-PY=scripts/python
+PY=pipeline/python
 
 # ==================== Preflight ====================
 
 if [[ ! -s "$genome" || ! -s "$anno" ]]; then
-    if [[ -f scripts/fetch_tair10.sh ]]; then
+    if [[ -f pipeline/data/fetch_tair10.sh ]]; then
         echo "Downloading genome and annotation..."
-        bash scripts/fetch_tair10.sh
+        bash pipeline/data/fetch_tair10.sh
     fi
 fi
 
@@ -256,7 +256,7 @@ echo "[3/3] Generating heatmaps..."
 if ! command -v Rscript >/dev/null 2>&1; then
     echo "   Rscript not found — skipping heatmaps. Main output (motif_output.txt) is unaffected." >&2
 else
-    draw() { Rscript scripts/r/draw_heatmap.R "$@"; }
+    draw() { Rscript pipeline/r/draw_heatmap.R "$@"; }
     draw All     "$plot_output/heatmap.png"                "$heterotypic_output/motif_output.txt" 5 3 6 FALSE
     draw Overlap "$plot_output/heatmap_overlap_unique.png" "$heterotypic_output/motif_output.txt" 5 3 6 TRUE
     draw Overlap "$plot_output/heatmap_overlap.png"        "$heterotypic_output/motif_output.txt" 5 3 6 FALSE
