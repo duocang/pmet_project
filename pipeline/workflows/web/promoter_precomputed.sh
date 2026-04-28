@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# promoters_only_pair — heterotypic enrichment + heatmaps on a pre-built index
+# promoter_precomputed (web) — heterotypic enrichment + heatmaps on a pre-built index
 # ==============================================================================
 # Used by the web stack's `promoters_pre` mode. Mirrors stages [2] and [3]
 # of scripts/pipeline/03_promoter.sh; the homotypic stage has already been
@@ -17,7 +17,7 @@ script_dir=$(cd -- "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)
 
 usage() {
     cat >&2 <<'EOF'
-USAGE: promoters_only_pair.sh -d <pmetindex_dir> -g <gene_file> -o <output_dir> [options]
+USAGE: promoter_precomputed.sh -d <pmetindex_dir> -g <gene_file> -o <output_dir> [options]
 
 Options:
   -d <pmetindex_dir>   pre-built homotypic index. Must contain:

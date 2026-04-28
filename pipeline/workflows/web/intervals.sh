@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# intervals_index_pair — full PMET intervals pipeline
+# intervals (web) — full PMET intervals pipeline
 # ==============================================================================
 # Runs interval indexing, heterotypic motif-pair enrichment, and heatmaps in
 # one go. Used by the web stack's `intervals` mode and as the canonical CLI
@@ -24,7 +24,7 @@ script_dir=$(cd -- "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)
 
 usage() {
     cat >&2 <<'EOF'
-USAGE: intervals_index_pair.sh [options] [<genome> <memefile>]
+USAGE: intervals.sh [options] [<genome> <memefile>]
 
 Options:
   -r <root_dir>        override project root (where build/ and scripts/ live)

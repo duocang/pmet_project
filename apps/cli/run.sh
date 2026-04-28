@@ -8,7 +8,7 @@
 set -euo pipefail
 
 script_dir=$(cd -- "$(dirname "$0")/../.." && pwd)
-pipeline_dir="$script_dir/pipeline/workflows/bench"
+pipeline_dir="$script_dir/pipeline/workflows/cli"
 
 # Load color helpers
 if [ -f "$script_dir/pipeline/lib/print_colors.sh" ]; then
@@ -27,15 +27,15 @@ fi
 
 get_description() {
     case "$1" in
-        00_requirements.sh)         echo "Check system requirements and setup PMET environment" ;;
-        01_benchmark_cpu.sh)        echo "Benchmark heterotypic analysis (single CPU vs parallel)" ;;
-        02_benchmark_parameters.sh) echo "Benchmark PMET parameters on promoters" ;;
-        03_promoter.sh)             echo "Run PMET on promoter regions" ;;
-        04_intervals.sh)            echo "Run PMET on genomic intervals (e.g., ATAC-seq peaks)" ;;
-        05_promoter_gap.sh)         echo "Run PMET on promoters with a TSS-proximal gap" ;;
-        06_elements_longest.sh)     echo "Run PMET on a genomic element (longest isoform per gene)" ;;
-        07_elements_merged.sh)      echo "Run PMET on a genomic element (merged isoforms per gene)" ;;
-        08_pair_only.sh)            echo "Re-pair an existing index (skips homotypic; needs 03 output by default)" ;;
+        00_env_check.sh)        echo "Check system requirements and setup PMET environment" ;;
+        01_perf_cpu.sh)         echo "Perf benchmark: heterotypic analysis (single CPU vs parallel)" ;;
+        02_perf_params.sh)      echo "Perf benchmark: sweep PMET parameters on promoters" ;;
+        03_promoter.sh)         echo "Run PMET on promoter regions" ;;
+        04_intervals.sh)        echo "Run PMET on genomic intervals (e.g., ATAC-seq peaks)" ;;
+        05_promoter_gap.sh)     echo "Run PMET on promoters with a TSS-proximal gap" ;;
+        06_elements_longest.sh) echo "Run PMET on a genomic element (longest isoform per gene)" ;;
+        07_elements_merged.sh)  echo "Run PMET on a genomic element (merged isoforms per gene)" ;;
+        08_pair_only.sh)        echo "Re-pair an existing index (skips homotypic; needs 03 output by default)" ;;
         *) echo "No description available" ;;
     esac
 }

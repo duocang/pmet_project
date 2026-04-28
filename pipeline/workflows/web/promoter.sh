@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# promoters_index_pair — full PMET promoters pipeline
+# promoter (web) — full PMET promoters pipeline
 # ==============================================================================
 # Runs homotypic indexing, heterotypic motif-pair enrichment, and heatmaps in
 # one go. Used by the web stack's `promoters` mode and as the canonical CLI
@@ -23,7 +23,7 @@ script_dir=$(cd -- "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)
 
 usage() {
     cat >&2 <<'EOF'
-USAGE: 03_promoter.sh [options] [<genome> <gff3> <memefile> <gene_input_file>]
+USAGE: promoter.sh [options] [<genome> <gff3> <memefile> <gene_input_file>]
 
 Options:
   -r <root_dir>          override project root (where build/ and scripts/ live)

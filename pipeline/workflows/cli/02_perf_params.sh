@@ -54,7 +54,7 @@ topn_values=(5000)
 keep_intermediate=false  # false: delete shared/, per-length and per-combo dirs when no longer needed
 
 # Output
-res_dir=results/02_benchmark_parameters
+res_dir=results/02_perf_params
 shared_dir="$res_dir/shared"
 heterotypic_output="$res_dir/02_heterotypic"
 plot_output="$res_dir/heatmap"

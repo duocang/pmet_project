@@ -113,7 +113,7 @@ def test_executor_command_building():
             "result_link": "http://example.com/results/test.zip"
         }
 
-        script_path = Path("scripts/pipeline/promoters_only_pair.sh")
+        script_path = Path("pipeline/workflows/web/promoter_precomputed.sh")
         if script_path.exists():
             cmd = executor._build_promoters_pre_cmd(meta, script_path)
             print(f"   - promoters_pre command args: {len(cmd)}")

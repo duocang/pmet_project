@@ -13,7 +13,7 @@ source pipeline/lib/print_colors.sh
 
 # ==================== Configuration ====================
 
-output=results/01_benchmark_cpu
+output=results/01_perf_cpu
 indexoutput=data/homotypic_promoters
 # Use a real, project-tracked gene list for the benchmark. The legacy
 # `data/gene.txt` referenced here was removed; the benchmark only cares that

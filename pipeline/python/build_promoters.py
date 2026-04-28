@@ -2,7 +2,7 @@
 """Build the promoter side of a homotypic input from a gene BED.
 
 Replaces the inline 9-step `bedtools flank → … → fasta-get-markov`
-sequence that was duplicated across `02_benchmark_parameters.sh`,
+sequence that was duplicated across `02_perf_params.sh`,
 `03_promoter.sh`, and `05_promoter_gap.sh`. The behaviour matches the
 union of those scripts exactly:
 

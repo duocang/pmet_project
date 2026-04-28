@@ -27,26 +27,25 @@ make demo        # runs indexing + pairing against data/*/demo
 make baseline    # captures fingerprints for regression checks
 ```
 
-## Research / bench pipelines (the old `0X_*.sh` scripts)
+## Research / CLI pipelines (the numbered `0X_*.sh` workflows)
 
-The numbered analysis scripts (`00_requirements.sh`, `03_promoter.sh`,
-`04_intervals.sh`, `06_elements_longest.sh`, …) live at
-[`pipeline/workflows/bench/`](pipeline/workflows/bench/). All of them
-expect to be invoked with the **repo root as cwd** (they `cd` there
-themselves), and resolve helpers via `pipeline/{lib,python,r}/`.
+The numbered analysis scripts live at
+[`pipeline/workflows/cli/`](pipeline/workflows/cli/). All expect to be
+invoked with the **repo root as cwd** (they `cd` there themselves) and
+resolve helpers via `pipeline/{lib,python,r}/`.
 
 **Pre-flight (run once):**
 
 ```bash
-make build                                       # produce ./build/* binaries
-bash pipeline/workflows/bench/00_requirements.sh # check tools, fetch TAIR10 if missing
+make build                                     # produce ./build/* binaries
+bash pipeline/workflows/cli/00_env_check.sh    # check tools, fetch TAIR10 if missing
 ```
 
 **Two ways to run a workflow, e.g. `03_promoter.sh`:**
 
 ```bash
 # A) Direct — accepts overrides via getopts; defaults reproduce the canonical TAIR10 demo:
-bash pipeline/workflows/bench/03_promoter.sh
+bash pipeline/workflows/cli/03_promoter.sh
 
 # B) Interactive menu — pick from the numbered list:
 bash apps/cli/run.sh
@@ -55,7 +54,7 @@ bash apps/cli/run.sh
 `03_promoter.sh -h` prints the full option list. Common overrides:
 
 ```bash
-bash pipeline/workflows/bench/03_promoter.sh \
+bash pipeline/workflows/cli/03_promoter.sh \
     -s data/TAIR10.fasta \
     -a data/TAIR10.gff3 \
     -m data/Franco-Zorrilla_et_al_2014.meme \
@@ -72,19 +71,24 @@ Outputs land under `results/<workflow_name>/` (gitignored). Heatmaps need
 them stages [1] and [2] still produce the data, [3] is skipped with a
 warning.
 
-**Workflow index** (all under `pipeline/workflows/bench/`):
+**Workflow index** (all under `pipeline/workflows/cli/`):
 
 | script | purpose |
 |---|---|
-| `00_requirements.sh`         | Tool/dep check; downloads TAIR10 if absent |
-| `01_benchmark_cpu.sh`        | Heterotypic single-cpu vs parallel benchmark |
-| `02_benchmark_parameters.sh` | Sweep PMET parameters on promoters |
-| `03_promoter.sh`             | Promoter homotypic + heterotypic + heatmaps |
-| `04_intervals.sh`            | Same flow on user-supplied intervals (peaks) |
-| `05_promoter_gap.sh`         | Promoter gap-extension analysis |
-| `06_elements_longest.sh`     | Genomic-element pipeline, longest-isoform strategy |
-| `07_elements_merged.sh`      | Genomic-element pipeline, merged-isoform strategy |
-| `08_pair_only.sh`            | Re-run only pairing against an existing index |
+| `00_env_check.sh`        | Tool/dep check; downloads TAIR10 if absent |
+| `01_perf_cpu.sh`         | Perf benchmark: single-cpu vs parallel heterotypic |
+| `02_perf_params.sh`      | Perf benchmark: sweep PMET parameters on promoters |
+| `03_promoter.sh`         | Promoter homotypic + heterotypic + heatmaps |
+| `04_intervals.sh`        | Same flow on user-supplied intervals (peaks) |
+| `05_promoter_gap.sh`     | Promoter gap-extension analysis |
+| `06_elements_longest.sh` | Genomic-element pipeline, longest-isoform strategy |
+| `07_elements_merged.sh`  | Genomic-element pipeline, merged-isoform strategy |
+| `08_pair_only.sh`        | Re-run only pairing against an existing index |
+
+The web-app workflows (called by `apps/pmet_backend/services/executor.py`)
+live separately under [`pipeline/workflows/web/`](pipeline/workflows/web/):
+`promoter.sh`, `intervals.sh`, `promoter_precomputed.sh` — same audience as
+the submit form's three modes.
 
 ## Deploy the web app
 
