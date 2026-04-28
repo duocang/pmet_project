@@ -8,7 +8,10 @@
 set -euo pipefail
 
 script_dir=$(cd -- "$(dirname "$0")/../.." && pwd)
+# Top-level merged workflows (post-dedup) live at pipeline/workflows/;
+# numbered ones still live under cli/. Both are surfaced in the menu.
 pipeline_dir="$script_dir/pipeline/workflows/cli"
+top_workflows_dir="$script_dir/pipeline/workflows"
 
 # Load color helpers
 if [ -f "$script_dir/pipeline/lib/print_colors.sh" ]; then
@@ -27,6 +30,7 @@ fi
 
 get_description() {
     case "$1" in
+        pair_only.sh)           echo "Re-pair an existing homotypic index (skips indexing; needs 03 output by default)" ;;
         00_env_check.sh)        echo "Check system requirements and setup PMET environment" ;;
         01_perf_cpu.sh)         echo "Perf benchmark: heterotypic analysis (single CPU vs parallel)" ;;
         02_perf_params.sh)      echo "Perf benchmark: sweep PMET parameters on promoters" ;;
@@ -35,7 +39,6 @@ get_description() {
         05_promoter_gap.sh)     echo "Run PMET on promoters with a TSS-proximal gap" ;;
         06_elements_longest.sh) echo "Run PMET on a genomic element (longest isoform per gene)" ;;
         07_elements_merged.sh)  echo "Run PMET on a genomic element (merged isoforms per gene)" ;;
-        08_pair_only.sh)        echo "Re-pair an existing index (skips homotypic; needs 03 output by default)" ;;
         *) echo "No description available" ;;
     esac
 }
@@ -75,10 +78,14 @@ show_menu() {
 
 run_pipeline() {
     local script="$1"
-    local script_path="$pipeline_dir/$script"
-
-    if [ ! -f "$script_path" ]; then
-        print_red "Error: Script not found: $script_path"
+    local script_path
+    # Resolve: top-level merged workflows take precedence over numbered cli/ ones.
+    if [[ -f "$top_workflows_dir/$script" ]]; then
+        script_path="$top_workflows_dir/$script"
+    elif [[ -f "$pipeline_dir/$script" ]]; then
+        script_path="$pipeline_dir/$script"
+    else
+        print_red "Error: Script not found: $script (looked in $top_workflows_dir and $pipeline_dir)"
         return 1
     fi
 
@@ -130,15 +137,15 @@ run_pipeline() {
                 -o "results/04_intervals/01_homotypic"         \
                 -x "results/04_intervals/02_heterotypic"
             ;;
-        08_pair_only.sh)
+        pair_only.sh)
             # Reuses pipeline 03's homotypic index and the same canonical
             # gene list. Requires 03 to have been run first (preflight will
             # fail with a clear error otherwise — run option [3] first).
             bash "$script_path" \
-                -d "results/03_promoter/01_homotypic"           \
-                -g "data/genes/genes_cell_type_treatment.txt"   \
-                -o "results/08_pair_only/cell_type_treatment_ic4" \
-                -i 4                                            \
+                -d "results/03_promoter/01_homotypic"             \
+                -g "data/genes/genes_cell_type_treatment.txt"     \
+                -o "results/pair_only/cell_type_treatment_ic4"    \
+                -i 4                                              \
                 -t 4
             ;;
         *)
@@ -168,19 +175,24 @@ run_pipeline() {
 # Main
 # ==============================================================================
 
-# Get list of pipelines. Skip files starting with `_` — those are
-# library bodies that pipeline wrappers `source`; not standalone
-# entrypoints.
+# Build the menu by globbing two dirs, in this order:
+#   1) pipeline/workflows/*.sh    — merged top-level workflows (no cli/web split)
+#   2) pipeline/workflows/cli/*.sh — still-numbered research workflows
+# Each entry stores both the display name and the full path so the
+# dispatcher can locate the script regardless of which dir it lives in.
+# Skip files starting with `_` — library bodies meant for `source`.
 pipelines=()
-for f in "$pipeline_dir"/*.sh; do
+pipeline_paths=()
+for f in "$top_workflows_dir"/*.sh "$pipeline_dir"/*.sh; do
     [ -f "$f" ] || continue
     name=$(basename "$f")
     [[ "$name" == _* ]] && continue
     pipelines+=("$name")
+    pipeline_paths+=("$f")
 done
 
 if [ ${#pipelines[@]} -eq 0 ]; then
-    print_red "No pipeline scripts found in $pipeline_dir"
+    print_red "No pipeline scripts found in $top_workflows_dir or $pipeline_dir"
     exit 1
 fi
 

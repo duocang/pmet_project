@@ -71,24 +71,25 @@ Outputs land under `results/<workflow_name>/` (gitignored). Heatmaps need
 them stages [1] and [2] still produce the data, [3] is skipped with a
 warning.
 
-**Workflow index** (all under `pipeline/workflows/cli/`):
+**Workflow index**:
 
-| script | purpose |
-|---|---|
-| `00_env_check.sh`        | Tool/dep check; downloads TAIR10 if absent |
-| `01_perf_cpu.sh`         | Perf benchmark: single-cpu vs parallel heterotypic |
-| `02_perf_params.sh`      | Perf benchmark: sweep PMET parameters on promoters |
-| `03_promoter.sh`         | Promoter homotypic + heterotypic + heatmaps |
-| `04_intervals.sh`        | Same flow on user-supplied intervals (peaks) |
-| `05_promoter_gap.sh`     | Promoter gap-extension analysis |
-| `06_elements_longest.sh` | Genomic-element pipeline, longest-isoform strategy |
-| `07_elements_merged.sh`  | Genomic-element pipeline, merged-isoform strategy |
-| `08_pair_only.sh`        | Re-run only pairing against an existing index |
+| script | location | purpose |
+|---|---|---|
+| `pair_only.sh`           | `pipeline/workflows/`     | Re-pair an existing homotypic index (used by web `promoters_pre` mode and CLI re-run scenarios) |
+| `00_env_check.sh`        | `pipeline/workflows/cli/` | Tool/dep check; downloads TAIR10 if absent |
+| `01_perf_cpu.sh`         | `pipeline/workflows/cli/` | Perf benchmark: single-cpu vs parallel heterotypic |
+| `02_perf_params.sh`      | `pipeline/workflows/cli/` | Perf benchmark: sweep PMET parameters on promoters |
+| `03_promoter.sh`         | `pipeline/workflows/cli/` | Promoter homotypic + heterotypic + heatmaps |
+| `04_intervals.sh`        | `pipeline/workflows/cli/` | Same flow on user-supplied intervals (peaks) |
+| `05_promoter_gap.sh`     | `pipeline/workflows/cli/` | Promoter gap-extension analysis |
+| `06_elements_longest.sh` | `pipeline/workflows/cli/` | Genomic-element pipeline, longest-isoform strategy |
+| `07_elements_merged.sh`  | `pipeline/workflows/cli/` | Genomic-element pipeline, merged-isoform strategy |
 
-The web-app workflows (called by `apps/pmet_backend/services/executor.py`)
-live separately under [`pipeline/workflows/web/`](pipeline/workflows/web/):
-`promoter.sh`, `intervals.sh`, `promoter_precomputed.sh` — same audience as
-the submit form's three modes.
+The remaining web-app workflows (called by `apps/pmet_backend/services/executor.py`)
+still live under [`pipeline/workflows/web/`](pipeline/workflows/web/):
+`promoter.sh`, `intervals.sh`. They will be merged with their CLI counterparts
+(`03_promoter.sh`, `04_intervals.sh`) into top-level `promoter.sh` and
+`intervals.sh` in follow-up commits.
 
 ## Deploy the web app
 
