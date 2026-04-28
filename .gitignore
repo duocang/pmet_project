@@ -43,6 +43,13 @@ logs/
 *.sqlite
 *.sqlite3
 
+# Secrets — never commit
+email_credential.txt
+*.pem
+*.key
+.env
+.env.*
+
 # Large reference genomes / annotations (keep demo only)
 TAIR10.fasta
 TAIR10.fasta.fai
