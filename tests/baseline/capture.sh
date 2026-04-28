@@ -97,8 +97,8 @@ echo ""
 
 echo "## section:backend_pytest"
 # Tries new location first, falls back to pre-refactor.
-if [ -f apps/backend/test_api.py ]; then
-  if (cd apps && python3 backend/test_api.py) >/tmp/baseline_pytest.log 2>&1; then
+if [ -f apps/pmet_backend/test_api.py ]; then
+  if (cd apps && python3 pmet_backend/test_api.py) >/tmp/baseline_pytest.log 2>&1; then
     echo "# PYTEST_OK"
   else
     echo "# PYTEST_FAIL exit=$?"

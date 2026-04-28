@@ -3,26 +3,22 @@ from dataclasses import dataclass
 
 @dataclass
 class Config:
-    PROJECT_ROOT: Path = Path(__file__).parent.parent
+    # Repo root: apps/backend/config.py -> ../../.. = repo root.
+    PROJECT_ROOT: Path = Path(__file__).resolve().parent.parent.parent
     RESULT_DIR: Path = PROJECT_ROOT / "result"
     # Read-only catalog of pre-computed species/motif databases, populated by
-    # scripts/download_pmet_data.sh. Layout: <species>/<motif_db>/.
+    # pipeline/data/download_pmet_data.sh. Layout: <species>/<motif_db>/.
     PRECOMPUTED_INDEXING_DIR: Path = PROJECT_ROOT / "data" / "indexing"
-    # Per-species record of parameters the indexes were built with
-    # (promoter_length, utr5, overlap, etc.). Surfaced as read-only
-    # "Fixed parameters" in the submit form. Re-read on every request.
     PRECOMPUTED_INDEXING_METADATA: Path = PROJECT_ROOT / "data" / "indexing_metadata.json"
-    # External reference metadata: species description, genome/annotation
-    # file names + download URLs, and the source URL for each motif database.
-    # Used by the species/motif-DB detail panel in the submit form.
     GENOME_METADATA: Path = PROJECT_ROOT / "data" / "genome_n_annotation.json"
-    # Each task lives under RESULT_DIR/<task_id>/{upload,indexing,pairing}/.
-    # The frontend generates the task_id (a UUID) on submit-page mount and
-    # reuses it for both the upload phase and the run phase, so all artefacts
-    # for one submission share a single root.
     TASKS_DIR: Path = PROJECT_ROOT / "result" / "tasks"
-    SCRIPTS_DIR: Path = PROJECT_ROOT / "scripts"
-    PMET_SCRIPTS_DIR: Path = PROJECT_ROOT / "pmet_pipeline"
+    # Workflows + helpers (bash + python + R) live under pipeline/.
+    # The "-r" flag the indexer takes equals str(SCRIPTS_DIR).
+    SCRIPTS_DIR: Path = PROJECT_ROOT / "pipeline"
+    # Repo root again — executor uses this for build/ and as the workflow base
+    # path. Kept under the existing name to avoid a churn-y rename across the
+    # executor and Dockerfile docs.
+    PMET_SCRIPTS_DIR: Path = PROJECT_ROOT
 
     # Email configuration
     EMAIL_USERNAME: str = ""
