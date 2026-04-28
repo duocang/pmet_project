@@ -33,3 +33,9 @@ bash tests/baseline/capture.sh > tests/baseline/fingerprints.txt
 
 Compare with `git diff tests/baseline/fingerprints.txt` after the refactor.
 The "binaries" section paths will change (post-refactor everything is at `build/` only) — that section is expected to differ. The hashes for **demo outputs** must stay identical.
+
+## Known non-determinism
+
+`core_demo_run_indexing_c -> binomial_thresholds.txt` produces a small set of distinct hashes across runs (observed: `bca3241d…`, `eecc1394…`, `c1521eec…`). The per-motif `fimohits/*.txt` outputs and the cpp/fused engines' equivalents are all deterministic. The C indexer's instability is a pre-existing code issue (likely hash-table iteration order or thread scheduling), unrelated to the monorepo refactor — verified by reproducing it against the original `PMET_project/scripts/run_indexing.sh -v c` before any move.
+
+When verifying post-refactor regressions, accept the C `binomial_thresholds.txt` as flapping between this known set of hashes; treat any other change as a real regression.

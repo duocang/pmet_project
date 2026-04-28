@@ -66,3 +66,6 @@ pmet_shiny_app/data/indexing/
 .vscode/
 *.swp
 *~
+
+# Branch comparison output (regeneratable)
+branch-compare/

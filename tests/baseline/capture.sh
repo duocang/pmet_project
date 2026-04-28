@@ -30,21 +30,26 @@ echo "# git: $(git rev-parse --short HEAD 2>/dev/null) on $(git rev-parse --abbr
 echo ""
 
 echo "## section:binaries"
+for b in index_c index_cpp index_fimo_fused pair_original pair_parallel; do
+  printf "build/%s\t%s\n" "$b" "$(hash_file "build/$b")"
+done
+# Pre-refactor copies (to be removed once subdirs are dropped):
 for d in PMET_project pmet_analysis_pipeline pmet_shiny_app; do
+  [ -d "$d/build" ] || continue
   for b in index_c index_cpp index_fimo_fused pair_original pair_parallel; do
-    printf "%s/build/%s\t%s\n" "$d" "$b" "$(hash_file "$d/build/$b")"
+    [ -f "$d/build/$b" ] && printf "%s/build/%s\t%s\n" "$d" "$b" "$(hash_file "$d/build/$b")"
   done
 done
 echo ""
 
 echo "## section:core_demo_indexing_existing_outputs"
-hash_dir_files "PMET_project/results/demo"
+hash_dir_files "results/demo/fimo_official"
 echo ""
 
 for v in c cpp fused; do
   echo "## section:core_demo_run_indexing_$v"
   out_dir="$(mktemp -d)"
-  if bash PMET_project/scripts/run_indexing.sh -v "$v" -o "$out_dir" >"/tmp/baseline_idx_$v.log" 2>&1; then
+  if bash apps/cli/scripts/run_indexing.sh -v "$v" -o "$out_dir" >"/tmp/baseline_idx_$v.log" 2>&1; then
     echo "# RUN_OK"
     hash_dir_files "$out_dir"
   else
@@ -57,7 +62,7 @@ done
 
 echo "## section:core_demo_run_pairing"
 out_dir="$(mktemp -d)"
-if bash PMET_project/scripts/run_pairing.sh -o "$out_dir" >/tmp/baseline_pair.log 2>&1; then
+if bash apps/cli/scripts/run_pairing.sh -o "$out_dir" >/tmp/baseline_pair.log 2>&1; then
   echo "# RUN_OK"
   hash_dir_files "$out_dir"
 else
@@ -68,20 +73,44 @@ rm -rf "$out_dir"
 echo ""
 
 echo "## section:analysis_smoke"
-if bash pmet_analysis_pipeline/scripts/pipeline/00_requirements.sh >/tmp/baseline_smoke.log 2>&1; then
-  echo "# SMOKE_OK"
-  tail -5 /tmp/baseline_smoke.log | sed 's/^/# /'
+# Still pre-refactor location until pipeline/ workflows commit.
+if [ -f pmet_analysis_pipeline/scripts/pipeline/00_requirements.sh ]; then
+  if bash pmet_analysis_pipeline/scripts/pipeline/00_requirements.sh >/tmp/baseline_smoke.log 2>&1; then
+    echo "# SMOKE_OK"
+    tail -5 /tmp/baseline_smoke.log | sed 's/^/# /'
+  else
+    echo "# SMOKE_FAIL exit=$?"
+    tail -20 /tmp/baseline_smoke.log | sed 's/^/# /'
+  fi
+elif [ -f pipeline/workflows/bench/00_requirements.sh ]; then
+  if bash pipeline/workflows/bench/00_requirements.sh >/tmp/baseline_smoke.log 2>&1; then
+    echo "# SMOKE_OK"
+    tail -5 /tmp/baseline_smoke.log | sed 's/^/# /'
+  else
+    echo "# SMOKE_FAIL exit=$?"
+    tail -20 /tmp/baseline_smoke.log | sed 's/^/# /'
+  fi
 else
-  echo "# SMOKE_FAIL exit=$?"
-  tail -20 /tmp/baseline_smoke.log | sed 's/^/# /'
+  echo "# SMOKE_SKIP no requirements.sh found"
 fi
 echo ""
 
 echo "## section:backend_pytest"
-if (cd pmet_shiny_app && python3 pmet_backend/test_api.py) >/tmp/baseline_pytest.log 2>&1; then
-  echo "# PYTEST_OK"
-  tail -5 /tmp/baseline_pytest.log | sed 's/^/# /'
+# Tries new location first, falls back to pre-refactor.
+if [ -f apps/backend/test_api.py ]; then
+  if (cd apps && python3 backend/test_api.py) >/tmp/baseline_pytest.log 2>&1; then
+    echo "# PYTEST_OK"
+  else
+    echo "# PYTEST_FAIL exit=$?"
+    tail -20 /tmp/baseline_pytest.log | sed 's/^/# /'
+  fi
+elif [ -f pmet_shiny_app/pmet_backend/test_api.py ]; then
+  if (cd pmet_shiny_app && python3 pmet_backend/test_api.py) >/tmp/baseline_pytest.log 2>&1; then
+    echo "# PYTEST_OK"
+  else
+    echo "# PYTEST_FAIL exit=$?"
+    tail -20 /tmp/baseline_pytest.log | sed 's/^/# /'
+  fi
 else
-  echo "# PYTEST_FAIL exit=$?"
-  tail -20 /tmp/baseline_pytest.log | sed 's/^/# /'
+  echo "# PYTEST_SKIP test_api.py not found"
 fi
