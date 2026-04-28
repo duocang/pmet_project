@@ -23,7 +23,8 @@ Captured before the monorepo refactor at commit `123a39b` on `refactor/monorepo`
 | core_demo_run_indexing_fused | OK | deterministic outputs |
 | core_demo_run_pairing | OK | deterministic outputs |
 | analysis_smoke | OK | only checks tool presence |
-| backend_pytest | **FAIL** | env-blocked: `No module named 'pydantic'`. Not a code regression — the system python3 lacks backend deps. Re-run after `pip install -r pmet_shiny_app/pmet_backend/requirements.txt` for true baseline. |
+| backend_pytest | **FAIL** | env-blocked: `No module named 'pydantic'`. Not a code regression — the system python3 lacks backend deps. Re-run after `pip install -r apps/pmet_backend/requirements.txt` for true baseline. |
+| frontend_home + submit + tasks + visualize + about (playwright) | OK | Full-page screenshots for `/` and `/submit` saved alongside this README. Submit page produces 4× expected `404 /api/indexing` errors when the backend is offline; UI degrades to "no databases found", does not crash. The other routes have 0 console errors. |
 
 ## Re-running
 

@@ -74,5 +74,8 @@ pmet_shiny_app/data/indexing/
 *.swp
 *~
 
+# Playwright MCP runtime artefacts (per-session logs and snapshots)
+.playwright-mcp/
+
 # Branch comparison output (regeneratable)
 branch-compare/
