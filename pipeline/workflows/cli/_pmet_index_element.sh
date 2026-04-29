@@ -17,10 +17,10 @@ set -e
 
 usage () {
     cat >&2 <<EOF
-USAGE: pmet_index_element.sh -s <longest|merged> [options] <genome.fa> <annot.gff3> <motifs.meme>
+USAGE: _pmet_index_element.sh -s <longest|merged> [options] <genome.fa> <annot.gff3> <motifs.meme>
 
 Required:
-  -r <dir>   Directory holding scripts/{python,r,gff3sort}/... helpers.
+  -r <dir>   Pipeline root holding {python,r,third_party/gff3sort}/...
   -i <key>   GFF3 attribute key holding the transcript id, e.g. 'ID=transcript:'
              for mRNA, 'Parent=transcript:' for exon/CDS/UTR.
   -o <dir>   Output directory.
@@ -348,7 +348,10 @@ mkdir -p "$indexingOutputDir/fimohits"
 print_green "Running FIMO..."
 runFimoIndexing () {
     local memebatch=$1 dir=$2 thresh=$3 build=$4 k=$5 n=$6
-    "$build/fimo" \
+    # `fimo` ships with the MEME suite (separate from PMET binaries in
+    # build/). Resolve via PATH like the other helpers do (samtools,
+    # bedtools, fasta-get-markov, parallel).
+    fimo \
         --no-qvalue \
         --text \
         --thresh "$thresh" \

@@ -35,7 +35,7 @@ start_time=$SECONDS
 ################################ 2. input parameters ###################################
 # tool
 toolDir=pipeline
-HOMOTYPIC=$toolDir/indexing/pmet_index_element.sh
+HOMOTYPIC=$toolDir/workflows/cli/_pmet_index_element.sh
 HETEROTYPIC=build/pair_parallel
 
 threads=8
