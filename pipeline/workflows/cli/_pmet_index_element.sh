@@ -1,6 +1,31 @@
 #!/bin/bash
 set -e
 
+# ============================================================================
+# ARCHITECTURAL NOTE — KNOWN BROKEN AS OF MONOREPO MOVE
+# ----------------------------------------------------------------------------
+# This script (and its callers 06_elements_longest.sh / 07_elements_merged.sh)
+# uses an OLDER two-step flow:
+#     fimo (per-motif batch, with PMET-patched --topn/--topk flags)
+#       -> separate pmet binary that consumed text fimohits
+# That patched fimo binary was shipped only by the upstream PMET_project
+# build/ tree and is not in our build/. Upstream MEME's stock fimo does
+# NOT support --topn/--topk, so step 8 below aborts with:
+#     "FATAL: Error processing command line options: --topn is not a valid option"
+#
+# The newer one-step `index_fimo_fused` binary (used by intervals.sh and
+# promoter.sh) accepts those flags and does both stages in one pass — but
+# only writes binary `*.bin` fimohits, while step 9 here needs `*.txt` to
+# do its per-interval -> gene-level collapse via sed/awk on rows.
+#
+# Resolving this requires either:
+#   (a) Adding a text-output mode to index_fimo_fused (upstream change).
+#   (b) Rewriting step 9 to decode the PMETBN01 binary format.
+#   (c) Bundling the PMET-patched fimo binary in build/.
+# All are non-trivial and out of scope for the rename / dedup work that
+# brought this script to its current location.
+# ============================================================================
+
 # Build a PMET homotypic index on a chosen genomic element
 # (mRNA / exon / CDS / three_prime_UTR / five_prime_UTR) using one of two
 # isoform-aggregation strategies:
@@ -343,14 +368,28 @@ python3 "$pmetroot/python/parse_memefile_batches.py" \
 
 
 # -------------------------------- Run FIMO -------------------------------------------------
+# WARNING — KNOWN BROKEN, see "ARCHITECTURAL NOTE" at top of file.
+#   --topn / --topk are PMET-project patches not present in upstream
+#   MEME's fimo. This step will abort with
+#     "FATAL: Error processing command line options: --topn is not a valid option"
+#   when the PATH-resolved fimo is the upstream MEME one.
+#   Switching to index_fimo_fused was attempted (it accepts --topn/--topk
+#   and writes binomial_thresholds.txt directly) but it only emits
+#   binary `*.bin` fimohits — step 9's per-interval → gene-level collapse
+#   needs `*.txt` to run sed/awk over rows. Resolving this requires
+#   either a binary-aware step-9 rewrite or a text-output mode added
+#   to index_fimo_fused; both are out of scope for the current rename
+#   /merge work. Until then 06_elements_longest.sh / 07_elements_merged.sh
+#   are non-functional.
 mkdir -p "$indexingOutputDir/fimohits"
 
 print_green "Running FIMO..."
 runFimoIndexing () {
     local memebatch=$1 dir=$2 thresh=$3 build=$4 k=$5 n=$6
-    # `fimo` ships with the MEME suite (separate from PMET binaries in
-    # build/). Resolve via PATH like the other helpers do (samtools,
-    # bedtools, fasta-get-markov, parallel).
+    # PMET-patched fimo lived at $build/fimo in the upstream PMET_project
+    # build/ tree. Our build/ doesn't ship it; resolve via PATH so the
+    # error message at least surfaces at the right line if a user has
+    # the patched fimo installed elsewhere.
     fimo \
         --no-qvalue \
         --text \
