@@ -121,6 +121,12 @@ const en = {
   'about.modes.intervals.title': 'Intervals',
   'about.modes.intervals.desc':
     'Analyze custom genomic intervals (e.g., ChIP-seq peaks) with a motif database. Suitable for non-promoter analyses.',
+  'about.modes.elements.title': 'Genomic Elements (CLI only)',
+  'about.modes.elements.desc':
+    'A CLI-only research workflow (elements.sh) that indexes any GFF3 feature type — 5\' UTR, 3\' UTR, CDS, mRNA, or exon — instead of the 1 kb upstream window. Useful for asking whether motif-pair patterns differ between promoters, UTRs, and coding regions.',
+  'about.modes.elements.figure_alt': 'What each -e option indexes',
+  'about.modes.elements.figure_caption':
+    'Top row: one gene on the chromosome. Rows below: each `-e` option with the indexed regions highlighted.',
 
   // ParameterPanel
   'params.heading': 'Parameters',
@@ -462,6 +468,12 @@ const zh: Record<keyof typeof en, string> = {
   'about.modes.intervals.title': '任意区间',
   'about.modes.intervals.desc':
     '针对 motif 数据库分析自定义基因组区间（如 ChIP-seq peak）。适合非启动子分析。',
+  'about.modes.elements.title': '基因组元素（仅 CLI）',
+  'about.modes.elements.desc':
+    '仅 CLI 的研究型工作流（elements.sh），不再固定扫描 TSS 上游 1 kb，而是索引 GFF3 中任意 feature 类型 — 5\' UTR、3\' UTR、CDS、mRNA 或 exon。用于回答"motif pair 模式在启动子、UTR 与编码区之间是否不同"这类问题。',
+  'about.modes.elements.figure_alt': '每种 -e 选项索引的区域',
+  'about.modes.elements.figure_caption':
+    '最上面一行是基因在染色体上的物理结构，下面 5 行对应 5 种 -e 选项，**高亮**部分就是该选项实际索引的区间。',
 
   // ParameterPanel
   'params.heading': '参数',
