@@ -62,7 +62,7 @@ export default function TaskDetailPage({ params }: PageProps) {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto text-center py-12">
+      <div className="max-w-5xl mx-auto text-center py-12">
         {t('task.loading')}
       </div>
     );
@@ -70,7 +70,7 @@ export default function TaskDetailPage({ params }: PageProps) {
 
   if (!task) {
     return (
-      <div className="max-w-4xl mx-auto text-center py-12">
+      <div className="max-w-5xl mx-auto text-center py-12">
         <p className="text-slate-500">{t('task.not_found')}</p>
         <Link href="/tasks" className="text-primary-700 hover:underline mt-4 inline-block">
           {t('task.back')}
@@ -80,7 +80,7 @@ export default function TaskDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       <div className="flex items-center gap-2 mb-6">
         <Link href="/tasks" className="text-slate-500 hover:text-slate-700">
           {t('task.back')}
