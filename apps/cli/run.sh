@@ -32,13 +32,12 @@ get_description() {
     case "$1" in
         promoter.sh)            echo "Run PMET on promoter regions (homotypic + heterotypic + heatmaps)" ;;
         intervals.sh)           echo "Run PMET on genomic intervals (e.g., ATAC-seq peaks)" ;;
+        elements.sh)            echo "Run PMET on a genomic element (UTR/CDS/mRNA/exon) — prompts for strategy + element" ;;
         pair_only.sh)           echo "Re-pair an existing homotypic index (skips indexing; needs promoter.sh output by default)" ;;
         00_env_check.sh)        echo "Check system requirements and setup PMET environment" ;;
         01_perf_cpu.sh)         echo "Perf benchmark: heterotypic analysis (single CPU vs parallel)" ;;
         02_perf_params.sh)      echo "Perf benchmark: sweep PMET parameters on promoters" ;;
         05_promoter_gap.sh)     echo "Run PMET on promoters with a TSS-proximal gap" ;;
-        06_elements_longest.sh) echo "Run PMET on a genomic element (longest isoform per gene)" ;;
-        07_elements_merged.sh)  echo "Run PMET on a genomic element (merged isoforms per gene)" ;;
         *) echo "No description available" ;;
     esac
 }

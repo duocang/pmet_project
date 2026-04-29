@@ -73,13 +73,12 @@ missing — the heatmap stage is skipped with a warning.
 |---|---|---|
 | `promoter.sh`            | `pipeline/workflows/`     | **Full promoter pipeline** — homotypic + heterotypic + heatmaps. Used by CLI demo and web `promoters` mode. |
 | `intervals.sh`           | `pipeline/workflows/`     | **Full interval pipeline** — same flow on user-supplied intervals (e.g. ATAC-seq peaks). Used by web `intervals` mode. |
+| `elements.sh`            | `pipeline/workflows/`     | **Genomic-element pipeline** (UTR / CDS / mRNA / exon). `-s longest \| merged` selects the isoform-aggregation strategy. Loops over every gene list in `data/genes/*.txt`. |
 | `pair_only.sh`           | `pipeline/workflows/`     | **Re-pair an existing homotypic index** — skips the expensive indexing stage. Used by web `promoters_pre` mode and CLI re-runs. |
 | `00_env_check.sh`        | `pipeline/workflows/cli/` | Tool/dep check; downloads TAIR10 if absent |
 | `01_perf_cpu.sh`         | `pipeline/workflows/cli/` | Perf benchmark: single-cpu vs parallel heterotypic |
 | `02_perf_params.sh`      | `pipeline/workflows/cli/` | Perf benchmark: sweep PMET parameters on promoters |
 | `05_promoter_gap.sh`     | `pipeline/workflows/cli/` | Promoter gap-extension analysis |
-| `06_elements_longest.sh` | `pipeline/workflows/cli/` | Genomic-element pipeline, longest-isoform strategy |
-| `07_elements_merged.sh`  | `pipeline/workflows/cli/` | Genomic-element pipeline, merged-isoform strategy |
 
 `pipeline/workflows/cli/` underscore-prefixed files (`_common.sh`,
 `_pmet_index_element.sh`) are libraries / sub-workflows sourced by 06/07;
