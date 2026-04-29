@@ -196,6 +196,7 @@ const en = {
   // FileUpload
   'fileupload.use_example': 'Use example',
   'fileupload.loading': 'Loading…',
+  'fileupload.uploading': 'Uploading',
   'fileupload.drop_active': 'Drop the file here...',
   'fileupload.drop_idle': 'Drag & drop a file here, or click to select',
   'fileupload.toast.uploaded': 'uploaded successfully',
@@ -543,6 +544,7 @@ const zh: Record<keyof typeof en, string> = {
   // FileUpload
   'fileupload.use_example': 'Use example',
   'fileupload.loading': '加载中…',
+  'fileupload.uploading': '上传中',
   'fileupload.drop_active': '把文件拖到这里...',
   'fileupload.drop_idle': '把文件拖到这里，或点击选择',
   'fileupload.toast.uploaded': '上传成功',

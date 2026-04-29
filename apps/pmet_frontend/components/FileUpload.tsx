@@ -8,7 +8,12 @@ import { useTranslation } from '@/lib/i18n';
 interface FileUploadProps {
   label: string;
   accept?: string;
-  onUpload: (file: File) => Promise<void>;
+  /**
+   * Caller does the actual upload. The optional onProgress callback is
+   * forwarded all the way down to axios's onUploadProgress so the bar
+   * reflects real bytes-on-wire instead of just an indeterminate spinner.
+   */
+  onUpload: (file: File, onProgress?: (pct: number) => void) => Promise<void>;
   currentFile?: string;
   helpText?: string;
   required?: boolean;
@@ -30,6 +35,9 @@ export default function FileUpload({
 }: FileUploadProps) {
   const { t } = useTranslation();
   const [loadingDemo, setLoadingDemo] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+
   const acceptedExtensions = accept
     ? accept
         .split(',')
@@ -37,20 +45,30 @@ export default function FileUpload({
         .filter(Boolean)
     : [];
 
-  const onDrop = useCallback(
-    async (acceptedFiles: File[]) => {
-      if (acceptedFiles.length === 0) return;
-
-      const file = acceptedFiles[0];
+  const runUpload = useCallback(
+    async (file: File) => {
+      setUploading(true);
+      setProgress(0);
       try {
-        await onUpload(file);
+        await onUpload(file, setProgress);
         toast.success(`${file.name} — ${t('fileupload.toast.uploaded')}`);
       } catch (error) {
         toast.error(`${t('fileupload.toast.failed')}: ${file.name}`);
         console.error(error);
+      } finally {
+        setUploading(false);
+        setProgress(0);
       }
     },
     [onUpload, t]
+  );
+
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      if (acceptedFiles.length === 0) return;
+      await runUpload(acceptedFiles[0]);
+    },
+    [runUpload]
   );
 
   const validateFileType = useCallback(
@@ -85,6 +103,7 @@ export default function FileUpload({
     onDrop,
     onDropRejected,
     multiple: false,
+    disabled: uploading,
     validator: acceptedExtensions.length > 0 ? validateFileType : undefined,
   });
 
@@ -97,7 +116,7 @@ export default function FileUpload({
       const blob = await res.blob();
       const filename = demoFilename || demoUrl.split('/').pop() || 'example';
       const file = new File([blob], filename, { type: blob.type || 'application/octet-stream' });
-      await onUpload(file);
+      await runUpload(file);
       toast.success(`${t('fileupload.toast.example_loaded')} ${filename}`);
     } catch (e) {
       toast.error(t('fileupload.toast.example_failed'));
@@ -105,7 +124,7 @@ export default function FileUpload({
     } finally {
       setLoadingDemo(false);
     }
-  }, [demoUrl, demoFilename, onUpload, t]);
+  }, [demoUrl, demoFilename, runUpload, t]);
 
   return (
     <div className="mb-4">
@@ -118,7 +137,7 @@ export default function FileUpload({
           <button
             type="button"
             onClick={useExample}
-            disabled={loadingDemo}
+            disabled={loadingDemo || uploading}
             className="text-xs font-medium text-primary-700 hover:text-primary-800 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -131,10 +150,22 @@ export default function FileUpload({
       </div>
       <div
         {...getRootProps()}
-        className={`file-upload ${isDragActive ? 'border-primary-500 bg-primary-50' : ''}`}
+        className={`file-upload ${isDragActive ? 'border-primary-500 bg-primary-50' : ''} ${uploading ? 'cursor-default' : ''}`}
       >
         <input {...getInputProps({ accept })} />
-        {currentFile ? (
+        {uploading ? (
+          <div className="space-y-2 px-2">
+            <p className="text-sm font-medium text-primary-700">
+              {t('fileupload.uploading')} <span className="font-mono">{progress}%</span>
+            </p>
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
+              <div
+                className="progress-bar-fill h-full bg-primary-600 transition-[width] duration-150 ease-out"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        ) : currentFile ? (
           <div className="text-green-600 font-medium">
             <svg className="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

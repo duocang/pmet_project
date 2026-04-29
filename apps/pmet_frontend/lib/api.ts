@@ -124,7 +124,12 @@ export const indexingApi = {
 };
 
 export const fileApi = {
-  upload: async (file: File, fileType: string, taskId?: string): Promise<UploadResponse> => {
+  upload: async (
+    file: File,
+    fileType: string,
+    taskId?: string,
+    onProgress?: (pct: number) => void
+  ): Promise<UploadResponse> => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('file_type', fileType);
@@ -132,6 +137,9 @@ export const fileApi = {
 
     const response = await api.post('/api/files/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: onProgress
+        ? (e) => onProgress(Math.round((e.loaded / (e.total || e.loaded || 1)) * 100))
+        : undefined,
     });
     return response.data;
   },

@@ -146,9 +146,13 @@ function SubmitPageContent() {
       .finally(() => setMotifDbLoading(false));
   }, [detailOpen, motifDbKey, selectedEntry, currentMotifDb]);
 
-  const handleFileUpload = async (file: File, fileType: FileFieldType) => {
+  const handleFileUpload = async (
+    file: File,
+    fileType: FileFieldType,
+    onProgress?: (pct: number) => void
+  ) => {
     try {
-      const result = await fileApi.upload(file, fileType, uploadSessionId);
+      const result = await fileApi.upload(file, fileType, uploadSessionId, onProgress);
       updatePaths({ [fileType]: result.path } as Partial<ModePaths>);
       updateFiles({ [fileType]: file } as Partial<ModeFiles>);
     } catch (error) {
@@ -538,7 +542,7 @@ function SubmitPageContent() {
             <FileUpload
               label={mode === 'intervals' ? t('submit.upload.label.intervals_fa') : t('submit.upload.label.genome')}
               accept=".fasta,.fa,.fasta.gz,.fa.gz"
-              onUpload={(file) => handleFileUpload(file, 'fasta')}
+              onUpload={(file, p) => handleFileUpload(file, 'fasta', p)}
               currentFile={files.fasta?.name}
               required
               demoUrl={`/api/demo/${mode}/fasta`}
@@ -550,7 +554,7 @@ function SubmitPageContent() {
             <FileUpload
               label={t('submit.upload.label.annotation')}
               accept=".gff3,.gff,.gff3.gz,.gff.gz"
-              onUpload={(file) => handleFileUpload(file, 'gff3')}
+              onUpload={(file, p) => handleFileUpload(file, 'gff3', p)}
               currentFile={files.gff3?.name}
               required
               demoUrl="/api/demo/promoters/gff3"
@@ -562,7 +566,7 @@ function SubmitPageContent() {
             <FileUpload
               label={t('submit.upload.label.motif')}
               accept=".meme"
-              onUpload={(file) => handleFileUpload(file, 'meme')}
+              onUpload={(file, p) => handleFileUpload(file, 'meme', p)}
               currentFile={files.meme?.name}
               required
               demoUrl={`/api/demo/${mode}/meme`}
@@ -574,7 +578,7 @@ function SubmitPageContent() {
             <FileUpload
               label={mode === 'intervals' ? t('submit.upload.label.peaks') : t('submit.upload.label.gene_list')}
               accept=".txt,.tsv"
-              onUpload={(file) => handleFileUpload(file, 'genes')}
+              onUpload={(file, p) => handleFileUpload(file, 'genes', p)}
               currentFile={files.genes?.name}
               helpText={t('submit.upload.help.gene_list')}
               required
