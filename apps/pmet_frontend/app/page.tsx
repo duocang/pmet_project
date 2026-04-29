@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { TranslationKey } from '@/lib/translations';
+import ZoomableImage from '@/components/ZoomableImage';
 
 function DatabaseIcon() {
   return (
@@ -195,7 +196,7 @@ export default function HomePage() {
               <span className="text-slate-400 transition-transform group-open:rotate-180">▾</span>
             </summary>
             <div className="mt-6">
-              <img
+              <ZoomableImage
                 src={`/figures/algorithm-two-stages-${langSuffix}.svg`}
                 alt={t('home.learn.what.alt')}
                 className="w-full rounded-lg border border-slate-200 bg-white"
@@ -210,7 +211,7 @@ export default function HomePage() {
               <span className="text-slate-400 transition-transform group-open:rotate-180">▾</span>
             </summary>
             <div className="mt-6">
-              <img
+              <ZoomableImage
                 src={`/figures/workflow-overview-${langSuffix}.svg`}
                 alt={t('home.learn.workflow.alt')}
                 className="w-full rounded-lg border border-slate-200 bg-white"
@@ -227,12 +228,12 @@ export default function HomePage() {
             <div className="mt-6 grid gap-6 md:grid-cols-2">
               <div>
                 <h4 className="mb-3 text-center font-semibold text-slate-950">{t('home.learn.combos.homo.title')}</h4>
-                <img src="/figures/pmet_homotypic.png" alt={t('home.learn.combos.homo.alt')} className="w-full rounded-lg border border-slate-200 bg-white" />
+                <ZoomableImage src="/figures/pmet_homotypic.png" alt={t('home.learn.combos.homo.alt')} className="w-full rounded-lg border border-slate-200 bg-white" />
                 <p className="mt-3 text-sm leading-6 text-slate-600">{t('home.learn.combos.homo.desc')}</p>
               </div>
               <div>
                 <h4 className="mb-3 text-center font-semibold text-slate-950">{t('home.learn.combos.hetero.title')}</h4>
-                <img src="/figures/pmet_heterotypic.png" alt={t('home.learn.combos.hetero.alt')} className="w-full rounded-lg border border-slate-200 bg-white" />
+                <ZoomableImage src="/figures/pmet_heterotypic.png" alt={t('home.learn.combos.hetero.alt')} className="w-full rounded-lg border border-slate-200 bg-white" />
                 <p className="mt-3 text-sm leading-6 text-slate-600">{t('home.learn.combos.hetero.desc')}</p>
               </div>
             </div>
@@ -246,12 +247,12 @@ export default function HomePage() {
             <div className="mt-6 grid gap-6 lg:grid-cols-2">
               <div>
                 <h4 className="mb-3 text-center font-semibold text-slate-950">{t('home.learn.modes.prom.title')}</h4>
-                <img src="/figures/workflow_promoters.png" alt={t('home.learn.modes.prom.alt')} className="w-full rounded-lg border border-slate-200 bg-white" />
+                <ZoomableImage src="/figures/workflow_promoters.png" alt={t('home.learn.modes.prom.alt')} className="w-full rounded-lg border border-slate-200 bg-white" />
                 <p className="mt-3 text-sm leading-6 text-slate-600">{t('home.learn.modes.prom.desc')}</p>
               </div>
               <div>
                 <h4 className="mb-3 text-center font-semibold text-slate-950">{t('home.learn.modes.int.title')}</h4>
-                <img src="/figures/workflow_intervals.png" alt={t('home.learn.modes.int.alt')} className="w-full rounded-lg border border-slate-200 bg-white" />
+                <ZoomableImage src="/figures/workflow_intervals.png" alt={t('home.learn.modes.int.alt')} className="w-full rounded-lg border border-slate-200 bg-white" />
                 <p className="mt-3 text-sm leading-6 text-slate-600">{t('home.learn.modes.int.desc')}</p>
               </div>
             </div>

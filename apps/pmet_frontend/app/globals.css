@@ -128,3 +128,19 @@ body {
 .gh-icon:hover {
   animation: gh-wiggle 0.6s ease-in-out infinite;
 }
+
+/* Zoomable image lightbox */
+@keyframes zoom-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes zoom-content-in {
+  from { transform: scale(0.92); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+.zoom-overlay {
+  animation: zoom-fade-in 180ms ease-out;
+}
+.zoom-content {
+  animation: zoom-content-in 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}

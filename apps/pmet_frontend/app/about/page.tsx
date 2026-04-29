@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslation } from '@/lib/i18n';
+import ZoomableImage from '@/components/ZoomableImage';
 
 export default function AboutPage() {
   const { t, locale } = useTranslation();
@@ -42,7 +43,7 @@ export default function AboutPage() {
           <div className="pt-4 border-t border-slate-200">
             <h3 className="font-medium text-slate-900">{t('about.modes.elements.title')}</h3>
             <p className="text-slate-600 text-sm mb-4">{t('about.modes.elements.desc')}</p>
-            <img
+            <ZoomableImage
               src={`/figures/gff3-element-options-${langSuffix}.svg`}
               alt={t('about.modes.elements.figure_alt')}
               className="w-full rounded-lg border border-slate-200 bg-white"
