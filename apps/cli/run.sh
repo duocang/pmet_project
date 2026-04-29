@@ -30,12 +30,12 @@ fi
 
 get_description() {
     case "$1" in
-        pair_only.sh)           echo "Re-pair an existing homotypic index (skips indexing; needs 03 output by default)" ;;
+        promoter.sh)            echo "Run PMET on promoter regions (homotypic + heterotypic + heatmaps)" ;;
+        intervals.sh)           echo "Run PMET on genomic intervals (e.g., ATAC-seq peaks)" ;;
+        pair_only.sh)           echo "Re-pair an existing homotypic index (skips indexing; needs promoter.sh output by default)" ;;
         00_env_check.sh)        echo "Check system requirements and setup PMET environment" ;;
         01_perf_cpu.sh)         echo "Perf benchmark: heterotypic analysis (single CPU vs parallel)" ;;
         02_perf_params.sh)      echo "Perf benchmark: sweep PMET parameters on promoters" ;;
-        03_promoter.sh)         echo "Run PMET on promoter regions" ;;
-        04_intervals.sh)        echo "Run PMET on genomic intervals (e.g., ATAC-seq peaks)" ;;
         05_promoter_gap.sh)     echo "Run PMET on promoters with a TSS-proximal gap" ;;
         06_elements_longest.sh) echo "Run PMET on a genomic element (longest isoform per gene)" ;;
         07_elements_merged.sh)  echo "Run PMET on a genomic element (merged isoforms per gene)" ;;
@@ -96,53 +96,17 @@ run_pipeline() {
     echo
 
     local start_time=$SECONDS
+    # The merged top-level workflows have sensible defaults for the
+    # canonical demo runs, so the launcher just executes them. Override
+    # any default by passing flags directly:
+    #   bash pipeline/workflows/promoter.sh -s <fasta> -a <gff3> ...
     case "$script" in
-        03_promoter.sh)
-            # Explicitly pass the canonical TAIR10 demo data and parameters.
-            # 03_promoter.sh accepts overrides via getopts; defaults inside
-            # the script match these values.
-            bash "$script_path" \
-                -s "data/TAIR10.fasta"                         \
-                -a "data/TAIR10.gff3"                          \
-                -m "data/Franco-Zorrilla_et_al_2014.meme"      \
-                -g "data/genes/genes_cell_type_treatment.txt"  \
-                -i "gene_id="                                  \
-                -F "all"                                       \
-                -v "NoOverlap"                                 \
-                -u "Yes"                                       \
-                -n 5000                                        \
-                -k 5                                           \
-                -p 1000                                        \
-                -f 0.05                                        \
-                -P "false"                                     \
-                -c 4                                           \
-                -t 4                                           \
-                -K "false"                                     \
-                -o "results/03_promoter/01_homotypic"          \
-                -x "results/03_promoter/02_heterotypic"        \
-                -y "results/03_promoter/plot"
-            ;;
-        04_intervals.sh)
-            # Explicitly pass the canonical bundled intervals demo data
-            # and parameters. Defaults inside the script match these values.
-            bash "$script_path" \
-                -s "data/homotypic_intervals/intervals.fa"     \
-                -m "data/homotypic_intervals/motif_more.meme"  \
-                -g "data/homotypic_intervals/intervals.txt"    \
-                -n 5000                                        \
-                -k 5                                           \
-                -f 0.05                                        \
-                -c 4                                           \
-                -t 1                                           \
-                -o "results/04_intervals/01_homotypic"         \
-                -x "results/04_intervals/02_heterotypic"
-            ;;
         pair_only.sh)
-            # Reuses pipeline 03's homotypic index and the same canonical
-            # gene list. Requires 03 to have been run first (preflight will
-            # fail with a clear error otherwise — run option [3] first).
+            # Reuses promoter.sh's homotypic index and the same canonical
+            # gene list. Requires promoter.sh to have been run first
+            # (preflight fails with a clear error otherwise).
             bash "$script_path" \
-                -d "results/03_promoter/01_homotypic"             \
+                -d "results/promoter/01_homotypic"                \
                 -g "data/genes/genes_cell_type_treatment.txt"     \
                 -o "results/pair_only/cell_type_treatment_ic4"    \
                 -i 4                                              \

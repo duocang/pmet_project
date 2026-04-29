@@ -1,56 +1,92 @@
 #!/bin/bash
 # ==============================================================================
-# intervals (web) — full PMET intervals pipeline
+# intervals — full PMET intervals pipeline
 # ==============================================================================
 # Runs interval indexing, heterotypic motif-pair enrichment, and heatmaps in
-# one go. Used by the web stack's `intervals` mode and as the canonical CLI
-# demo for full intervals runs.
+# one go.
+#
+# Use cases:
+#   - CLI:  research runs against bundled or user-supplied intervals
+#   - Web:  the `intervals` mode (apps/pmet_backend/services/executor.py)
 #
 # Stages:
-#   [1] Indexing — interval FASTA + MEME -> promoter lengths, IC, fimohits
-#                  (uses build/index_fimo_fused with internal OMP batching)
+#   [1] Indexing  — interval FASTA + MEME -> universe / promoter_lengths /
+#                   IC / fimohits via build/index_fimo_fused (OMP-batched)
 #   [2] Heterotypic — pair_parallel consumes the index
 #   [3] Heatmaps    — three R-rendered views (skipped if Rscript absent)
 #
-# Usage (CLI dev mode): just run it; defaults below process the bundled
-# intervals demo data.
-# Usage (web mode): invoked by pmet_backend/services/executor.py with options
-# documented below.
+# Merged from cli/04_intervals.sh + web/intervals.sh — same inlined
+# indexing body; takes web's better impl (BIN_DIR walker, R fallback,
+# 3-heatmap default, threads=4) and adds the cli's `-s -m` named-arg
+# aliases for callers that don't want positional args.
+#
+# FIMO and pair_parallel's binary fimohits ('PMETBN01' format) can't safely
+# carry ':' in sequence names (FIMO mis-parses; binary records are length-
+# prefixed). Sanitize ':' -> '__COLON__' on the way in and round-trip on the
+# user-facing text outputs at the end.
 # ==============================================================================
 
 set -euo pipefail
 
-script_dir=$(cd -- "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)
+script_dir=$(cd -- "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+cd "$script_dir"
+
+# ==================== Helpers ====================
+# Source colored logging if present; fall back to plain echo so the
+# script also works in containers / other minimal environments.
+if [[ -f pipeline/lib/print_colors.sh ]]; then
+    # shellcheck source=/dev/null
+    source pipeline/lib/print_colors.sh
+else
+    print_green()  { printf "\033[32m%s\033[0m\n" "$1"; }
+    print_red()    { printf "\033[31m%s\033[0m\n" "$1"; }
+    print_orange() { printf "\033[33m%s\033[0m\n" "$1"; }
+fi
+if [[ -f pipeline/lib/timer.sh ]]; then
+    # shellcheck source=/dev/null
+    source pipeline/lib/timer.sh
+else
+    print_elapsed_time() {
+        local s=$1 dt=$((SECONDS - s))
+        local d=$((dt / 86400)) h=$(((dt % 86400) / 3600)) m=$(((dt % 3600) / 60)) sec=$((dt % 60))
+        echo "Time taken: ${d}d ${h}h ${m}m ${sec}s"
+    }
+fi
+
+error_exit() { print_red "ERROR: $1" >&2; exit 1; }
+check_file() { [[ -f "$1" && -s "$1" ]] || error_exit "${2:-$1} missing or empty"; }
+check_dep()  { command -v "$1" &>/dev/null || error_exit "Tool not found: $1"; }
 
 usage() {
     cat >&2 <<'EOF'
 USAGE: intervals.sh [options] [<genome> <memefile>]
 
-Options:
-  -r <root_dir>        override project root (where build/ and scripts/ live)
-  -o <indexing_dir>    indexing stage output directory
-  -n <topn>            top n hits per motif (default: 5000)
-  -k <max_k>           max motif hits per interval (default: 5)
-  -f <fimo_threshold>  FIMO p-value threshold (default: 0.05)
-  -t <threads>         threads (default: 4)
-  -c <ic_threshold>    pairing IC threshold (default: 4)
-  -x <pairing_dir>     pairing output dir (heatmaps land in <dir>/plot)
-  -g <gene_file>       gene/interval list (overrides positional)
-  -e <email>           accepted for compatibility, not used by the script
-  -l <result_link>     accepted for compatibility, not used by the script
+Data (also settable as positional args in this order):
+  -s <genome>          interval FASTA            (default: data/homotypic_intervals/intervals.fa)
+  -m <memefile>        MEME motif file           (default: data/homotypic_intervals/motif_more.meme)
+  -g <gene_file>       interval/gene list        (default: data/homotypic_intervals/intervals.txt)
+
+Indexing parameters:
+  -n <topn>            top n hits per motif      (default: 5000)
+  -k <max_k>           max motif hits / interval (default: 5)
+  -f <fimo_threshold>  FIMO p-value threshold    (default: 0.05)
+
+Heterotypic / runtime:
+  -c <ic_threshold>    pairing IC threshold      (default: 4)
+  -t <threads>         threads                   (default: 4)
+
+Output directories:
+  -o <indexing_dir>    indexing stage output     (default: results/intervals/01_indexing)
+  -x <pairing_dir>     pairing stage output      (default: results/intervals/02_pairing,
+                       heatmaps land in <dir>/plot)
+
+Web-backend compat:
+  -r <project_root>    override repo root for binary search (used in docker)
+  -e <email>           accepted, ignored by the script (backend handles)
+  -l <result_link>     accepted, ignored
+
   -h                   show this help
 EOF
-}
-
-error_exit() { echo "ERROR: $1" >&2; exit 1; }
-check_file() { [[ -f "$1" && -s "$1" ]] || error_exit "${2:-$1} missing or empty"; }
-check_dep()  { command -v "$1" &>/dev/null || error_exit "Tool not found: $1"; }
-
-print_elapsed() {
-    local s=$1 e=$SECONDS dt
-    dt=$((e - s))
-    local d=$((dt / 86400)) h=$(((dt % 86400) / 3600)) m=$(((dt % 3600) / 60)) sec=$((dt % 60))
-    echo "Time taken: ${d}d ${h}h ${m}m ${sec}s"
 }
 
 # ==================== Defaults ====================
@@ -65,25 +101,27 @@ fimothresh=0.05
 icthresh=4
 threads=4
 
-res_dir=results/04_intervals
+res_dir=results/intervals
 indexing_output=
 pairing_output=
 project_root=$script_dir
 
 # ==================== Argument parsing ====================
 
-while getopts ":r:o:n:k:f:t:c:x:g:e:l:h" opt; do
+while getopts ":s:m:g:n:k:f:c:t:o:x:r:e:l:h" opt; do
     case $opt in
-        r) project_root=$OPTARG ;;
-        o) indexing_output=$OPTARG ;;
+        s) genome=$OPTARG ;;
+        m) meme=$OPTARG ;;
+        g) gene_input_file=$OPTARG ;;
         n) topn=$OPTARG ;;
         k) maxk=$OPTARG ;;
         f) fimothresh=$OPTARG ;;
-        t) threads=$OPTARG ;;
         c) icthresh=$OPTARG ;;
+        t) threads=$OPTARG ;;
+        o) indexing_output=$OPTARG ;;
         x) pairing_output=$OPTARG ;;
-        g) gene_input_file=$OPTARG ;;
-        e) : ;;
+        r) project_root=$OPTARG ;;
+        e) : ;;  # backend interface compat
         l) : ;;
         h) usage; exit 0 ;;
         \?) echo "Invalid option: -$OPTARG" >&2; usage; exit 1 ;;
@@ -93,8 +131,6 @@ done
 shift $((OPTIND - 1))
 [[ $# -ge 1 ]] && genome=$1
 [[ $# -ge 2 ]] && meme=$2
-
-cd "$script_dir"
 
 : "${indexing_output:=$res_dir/01_indexing}"
 : "${pairing_output:=$res_dir/02_pairing}"
@@ -118,9 +154,9 @@ BIN_PMET="$BIN_DIR/pair_parallel"
 
 # ==================== Preflight ====================
 
-check_file "$genome" "Interval/genome FASTA"
+check_file "$genome" "Interval FASTA"
 check_file "$meme"   "MEME motif file"
-check_file "$gene_input_file" "Gene/interval list"
+check_file "$gene_input_file" "Interval/gene list"
 
 for cmd in fasta-get-markov python3; do
     check_dep "$cmd"
@@ -134,16 +170,9 @@ grand_start=$SECONDS
 # ==============================================================================
 # [1] Indexing
 # ==============================================================================
-# FIMO and pair_parallel's binary fimohits ('PMETBN01' format) can't safely
-# carry ':' in sequence names: FIMO mis-parses, and the binary records are
-# length-prefixed so a sed-based ':' restore would shift bytes. Sanitize ':'
-# to '__COLON__' on the way in, keep the entire indexing namespace
-# (promoter_lengths.txt / universe.txt / fimohits/*.bin) in that sanitized
-# form, and let stage [2] handle round-tripping the user's gene list and
-# restoring ':' on the human-facing pair output at the end.
 
-echo
-echo "[1/3] Interval indexing..."
+print_green "\n[1/3] Interval indexing..."
+echo "Indexing output: $indexing_output"
 h_start=$SECONDS
 
 genome_sanitized="$indexing_output/genome_sanitized.fa"
@@ -171,8 +200,8 @@ nummotifs=$(grep -c '^MOTIF' "$meme")
 echo "   └─ $nummotifs motifs"
 
 # index_fimo_fused has internal OpenMP batching; one invocation handles
-# every motif. The previous shell-level for-loop forked one process per
-# motif each with its own OMP team, oversubscribing cores.
+# every motif. Replaces the earlier shell-level for-loop that forked one
+# process per motif each with its own OMP team, oversubscribing cores.
 OMP_NUM_THREADS="$threads" \
 "$BIN_INDEX"                            \
     --no-qvalue                         \
@@ -194,17 +223,17 @@ rm -rf "$indexing_output/memefiles" "$genome_sanitized"
 python3 "$PY/check_homotypic_contract.py" "$indexing_output" \
     || error_exit "Homotypic contract violated; see stderr above"
 
-print_elapsed "$h_start"
+print_elapsed_time "$h_start"
 
 # ==============================================================================
 # [2] Heterotypic
 # ==============================================================================
 
-echo
-echo "[2/3] Heterotypic motif search..."
+print_green "\n[2/3] Heterotypic motif search..."
+echo "Pairing output: $pairing_output"
 
-# Stage [1] keeps the index in sanitized form (':' → '__COLON__'). Sanitize
-# the user's gene list to match.
+# Stage [1] keeps the index in sanitized form (':' -> '__COLON__'). Sanitize
+# the user gene list to match.
 universefile="$indexing_output/universe.txt"
 gene_sanitized=$(mktemp)
 gene_tmp=$(mktemp)
@@ -217,12 +246,10 @@ if [[ ! -s "$gene_tmp" ]]; then
 fi
 
 # Both genes_used and genes_not_found are computed in sanitized space;
-# restore ':' afterwards (text files, sed-safe).
+# ':' is restored together with motif_output below.
 cp "$gene_tmp" "$pairing_output/genes_used_PMET.txt"
 grep -vwFf "$universefile" "$gene_sanitized" > "$pairing_output/genes_not_found.txt" || true
 
-# pair_parallel resolves -p/-b/-c/-f relative to -d, so feed it the
-# index dir as the base and bare filenames for the rest.
 "$BIN_PMET" \
     -d "$indexing_output"      \
     -g "$gene_tmp"             \
@@ -234,7 +261,7 @@ grep -vwFf "$universefile" "$gene_sanitized" > "$pairing_output/genes_not_found.
     -o "$pairing_output"       \
     -t "$threads" > "$pairing_output/pmet.log"
 
-# pair_parallel writes its results as temp*.txt shards; merge only those.
+# Merge ONLY pair_parallel's temp*.txt shards.
 shopt -s nullglob
 shards=("$pairing_output"/temp*.txt)
 shopt -u nullglob
@@ -244,7 +271,7 @@ fi
 cat "${shards[@]}" > "$pairing_output/motif_output.txt"
 rm -f "${shards[@]}"
 
-# Restore ':' in the user-facing text outputs (binary fimohits stay sanitized).
+# Restore ':' in user-facing text outputs (binary fimohits stay sanitized).
 for f in motif_output.txt genes_used_PMET.txt genes_not_found.txt; do
     p="$pairing_output/$f"
     if [[ -f "$p" ]]; then
@@ -256,11 +283,10 @@ done
 # [3] Heatmaps
 # ==============================================================================
 
-echo
-echo "[3/3] Generating heatmaps..."
+print_green "\n[3/3] Generating heatmaps..."
 
 if ! command -v Rscript >/dev/null 2>&1; then
-    echo "   Rscript not found — skipping heatmaps. Main output (motif_output.txt) is unaffected." >&2
+    print_orange "   Rscript not found — skipping heatmaps. Main output (motif_output.txt) is unaffected."
 else
     draw() { Rscript pipeline/r/draw_heatmap.R "$@"; }
     draw All     "$plot_output/heatmap.png"                "$pairing_output/motif_output.txt" 5 3 6 FALSE
@@ -268,6 +294,5 @@ else
     draw Overlap "$plot_output/heatmap_overlap.png"        "$pairing_output/motif_output.txt" 5 3 6 FALSE
 fi
 
-echo
-echo "Done."
-print_elapsed "$grand_start"
+print_green "\nDone."
+print_elapsed_time "$grand_start"

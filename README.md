@@ -27,69 +27,63 @@ make demo        # runs indexing + pairing against data/*/demo
 make baseline    # captures fingerprints for regression checks
 ```
 
-## Research / CLI pipelines (the numbered `0X_*.sh` workflows)
+## Pipeline workflows
 
-The numbered analysis scripts live at
-[`pipeline/workflows/cli/`](pipeline/workflows/cli/). All expect to be
-invoked with the **repo root as cwd** (they `cd` there themselves) and
-resolve helpers via `pipeline/{lib,python,r}/`.
+All workflows live under [`pipeline/workflows/`](pipeline/workflows/) and
+expect the **repo root as cwd** (they `cd` there themselves). Helpers
+come from `pipeline/{lib,python,r}/`. Output lands under `results/`
+(gitignored).
 
 **Pre-flight (run once):**
 
 ```bash
-make build                                     # produce ./build/* binaries
-bash pipeline/workflows/cli/00_env_check.sh    # check tools, fetch TAIR10 if missing
+make build                                          # produce ./build/* binaries
+bash pipeline/workflows/cli/00_env_check.sh         # check tools, fetch TAIR10 if missing
 ```
 
-**Two ways to run a workflow, e.g. `03_promoter.sh`:**
+**Two ways to run, e.g. `promoter.sh`:**
 
 ```bash
-# A) Direct — accepts overrides via getopts; defaults reproduce the canonical TAIR10 demo:
-bash pipeline/workflows/cli/03_promoter.sh
+# A) Direct — defaults reproduce the canonical TAIR10 demo, all overridable via getopts:
+bash pipeline/workflows/promoter.sh
 
-# B) Interactive menu — pick from the numbered list:
+# B) Interactive menu — pick from the listed workflows:
 bash apps/cli/run.sh
 ```
 
-`03_promoter.sh -h` prints the full option list. Common overrides:
+Each script's `-h` prints the full option list. Common promoter override:
 
 ```bash
-bash pipeline/workflows/cli/03_promoter.sh \
+bash pipeline/workflows/promoter.sh \
     -s data/TAIR10.fasta \
     -a data/TAIR10.gff3 \
     -m data/Franco-Zorrilla_et_al_2014.meme \
     -g data/genes/genes_cell_type_treatment.txt \
-    -t 8 \
-    -o results/03_promoter/01_homotypic \
-    -x results/03_promoter/02_heterotypic \
-    -y results/03_promoter/plot
+    -t 8
 ```
 
-Outputs land under `results/<workflow_name>/` (gitignored). Heatmaps need
-`Rscript` + the R packages listed in
-[`pipeline/r/install_packages.R`](pipeline/r/install_packages.R); without
-them stages [1] and [2] still produce the data, [3] is skipped with a
-warning.
+Heatmaps (stage [3]) need `Rscript` + the R packages listed in
+[`pipeline/r/install_packages.R`](pipeline/r/install_packages.R); the
+data stages [1]+[2] still produce `motif_output.txt` if Rscript is
+missing — the heatmap stage is skipped with a warning.
 
 **Workflow index**:
 
 | script | location | purpose |
 |---|---|---|
-| `pair_only.sh`           | `pipeline/workflows/`     | Re-pair an existing homotypic index (used by web `promoters_pre` mode and CLI re-run scenarios) |
+| `promoter.sh`            | `pipeline/workflows/`     | **Full promoter pipeline** — homotypic + heterotypic + heatmaps. Used by CLI demo and web `promoters` mode. |
+| `intervals.sh`           | `pipeline/workflows/`     | **Full interval pipeline** — same flow on user-supplied intervals (e.g. ATAC-seq peaks). Used by web `intervals` mode. |
+| `pair_only.sh`           | `pipeline/workflows/`     | **Re-pair an existing homotypic index** — skips the expensive indexing stage. Used by web `promoters_pre` mode and CLI re-runs. |
 | `00_env_check.sh`        | `pipeline/workflows/cli/` | Tool/dep check; downloads TAIR10 if absent |
 | `01_perf_cpu.sh`         | `pipeline/workflows/cli/` | Perf benchmark: single-cpu vs parallel heterotypic |
 | `02_perf_params.sh`      | `pipeline/workflows/cli/` | Perf benchmark: sweep PMET parameters on promoters |
-| `03_promoter.sh`         | `pipeline/workflows/cli/` | Promoter homotypic + heterotypic + heatmaps |
-| `04_intervals.sh`        | `pipeline/workflows/cli/` | Same flow on user-supplied intervals (peaks) |
 | `05_promoter_gap.sh`     | `pipeline/workflows/cli/` | Promoter gap-extension analysis |
 | `06_elements_longest.sh` | `pipeline/workflows/cli/` | Genomic-element pipeline, longest-isoform strategy |
 | `07_elements_merged.sh`  | `pipeline/workflows/cli/` | Genomic-element pipeline, merged-isoform strategy |
 
-The remaining web-app workflows (called by `apps/pmet_backend/services/executor.py`)
-still live under [`pipeline/workflows/web/`](pipeline/workflows/web/):
-`promoter.sh`, `intervals.sh`. They will be merged with their CLI counterparts
-(`03_promoter.sh`, `04_intervals.sh`) into top-level `promoter.sh` and
-`intervals.sh` in follow-up commits.
+`pipeline/workflows/cli/` underscore-prefixed files (`_common.sh`,
+`_pmet_index_element.sh`) are libraries / sub-workflows sourced by 06/07;
+they don't appear in the launcher menu.
 
 ## Deploy the web app
 

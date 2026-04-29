@@ -14,14 +14,12 @@ class PMETExecutor:
 
     ANSI_ESCAPE_RE = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
 
-    # Paths are relative to PROJECT_ROOT. All three modes run workflows
-    # under pipeline/workflows/. Merged scripts live at the top level
-    # (audience-agnostic); the still-split ones remain under web/ until
-    # they're merged in their own commits.
+    # Paths are relative to PROJECT_ROOT. All three modes run merged
+    # audience-agnostic workflows at pipeline/workflows/.
     SCRIPT_MAP = {
         "promoters_pre": "pipeline/workflows/pair_only.sh",
-        "promoters": "pipeline/workflows/web/promoter.sh",
-        "intervals": "pipeline/workflows/web/intervals.sh",
+        "promoters": "pipeline/workflows/promoter.sh",
+        "intervals": "pipeline/workflows/intervals.sh",
     }
 
     ARCH_ALIASES = {
