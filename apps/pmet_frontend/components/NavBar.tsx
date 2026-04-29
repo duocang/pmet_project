@@ -1,12 +1,22 @@
 'use client';
 
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
 import { LangToggle } from './LangToggle';
 
 const GITHUB_URL = 'https://github.com/duocang/PMET_project';
 
-const NAV_LINK_CLASS =
-  'rounded-md px-1.5 py-2 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-primary-800 sm:px-2.5 sm:text-sm lg:text-base';
+const NAV_LINK_BASE =
+  'rounded-md px-1.5 py-2 text-xs font-medium transition-colors sm:px-2.5 sm:text-sm lg:text-base';
+const NAV_LINK_IDLE = 'text-slate-600 hover:bg-slate-100 hover:text-primary-800';
+const NAV_LINK_ACTIVE = 'bg-primary-50 text-primary-800';
+
+function isActive(pathname: string | null, href: string) {
+  if (!pathname) return false;
+  if (href === '/') return pathname === '/';
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 function GitHubIcon() {
   return (
@@ -25,11 +35,14 @@ function GitHubIcon() {
 
 export function NavBar() {
   const { t } = useTranslation();
+  const pathname = usePathname();
+  const linkClass = (href: string) =>
+    `${NAV_LINK_BASE} ${isActive(pathname, href) ? NAV_LINK_ACTIVE : NAV_LINK_IDLE}`;
   return (
     <nav className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur">
       <div className="page-shell">
         <div className="flex h-16 items-center justify-between">
-          <a href="/" className="flex min-w-0 items-center group" aria-label="PMET home">
+          <Link href="/" className="flex min-w-0 items-center group" aria-label="PMET home">
             <img
               src="/figures/logo_small.png"
               alt="PMET"
@@ -38,26 +51,26 @@ export function NavBar() {
             <span className="ml-3 hidden truncate text-sm font-medium text-slate-500 md:inline">
               {t('nav.tagline')}
             </span>
-          </a>
+          </Link>
           <div className="flex min-w-0 items-center gap-1 sm:gap-2 lg:gap-3">
-            <a href="/" className={NAV_LINK_CLASS}>
+            <Link href="/" className={linkClass('/')}>
               {t('nav.home')}
-            </a>
-            <a href="/submit" className={NAV_LINK_CLASS}>
+            </Link>
+            <Link href="/submit" className={linkClass('/submit')}>
               {t('nav.analysis')}
-            </a>
-            <a href="/tasks" className={NAV_LINK_CLASS}>
+            </Link>
+            <Link href="/tasks" className={linkClass('/tasks')}>
               {t('nav.tasks')}
-            </a>
-            <a href="/visualize" className={NAV_LINK_CLASS}>
+            </Link>
+            <Link href="/visualize" className={linkClass('/visualize')}>
               {t('nav.visualize')}
-            </a>
-            <a href="/data" className={NAV_LINK_CLASS}>
+            </Link>
+            <Link href="/data" className={linkClass('/data')}>
               {t('nav.data')}
-            </a>
-            <a href="/about" className={NAV_LINK_CLASS}>
+            </Link>
+            <Link href="/about" className={linkClass('/about')}>
               {t('nav.about')}
-            </a>
+            </Link>
             <LangToggle />
             <a
               href={GITHUB_URL}
