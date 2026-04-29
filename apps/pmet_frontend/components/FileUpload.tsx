@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 import { useDropzone, type FileError, type FileRejection } from 'react-dropzone';
 import toast from 'react-hot-toast';
+import { useTranslation } from '@/lib/i18n';
 
 interface FileUploadProps {
   label: string;
@@ -27,6 +28,7 @@ export default function FileUpload({
   demoUrl,
   demoFilename,
 }: FileUploadProps) {
+  const { t } = useTranslation();
   const [loadingDemo, setLoadingDemo] = useState(false);
   const acceptedExtensions = accept
     ? accept
@@ -42,13 +44,13 @@ export default function FileUpload({
       const file = acceptedFiles[0];
       try {
         await onUpload(file);
-        toast.success(`${file.name} uploaded successfully`);
+        toast.success(`${file.name} — ${t('fileupload.toast.uploaded')}`);
       } catch (error) {
-        toast.error(`Failed to upload ${file.name}`);
+        toast.error(`${t('fileupload.toast.failed')}: ${file.name}`);
         console.error(error);
       }
     },
-    [onUpload]
+    [onUpload, t]
   );
 
   const validateFileType = useCallback(
@@ -71,10 +73,13 @@ export default function FileUpload({
     [acceptedExtensions]
   );
 
-  const onDropRejected = useCallback((fileRejections: FileRejection[]) => {
-    const firstError = fileRejections[0]?.errors[0];
-    toast.error(firstError?.message || 'Unsupported file type');
-  }, []);
+  const onDropRejected = useCallback(
+    (fileRejections: FileRejection[]) => {
+      const firstError = fileRejections[0]?.errors[0];
+      toast.error(firstError?.message || t('fileupload.toast.unsupported'));
+    },
+    [t]
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -93,14 +98,14 @@ export default function FileUpload({
       const filename = demoFilename || demoUrl.split('/').pop() || 'example';
       const file = new File([blob], filename, { type: blob.type || 'application/octet-stream' });
       await onUpload(file);
-      toast.success(`Loaded example: ${filename}`);
+      toast.success(`${t('fileupload.toast.example_loaded')} ${filename}`);
     } catch (e) {
-      toast.error('Failed to load example file');
+      toast.error(t('fileupload.toast.example_failed'));
       console.error(e);
     } finally {
       setLoadingDemo(false);
     }
-  }, [demoUrl, demoFilename, onUpload]);
+  }, [demoUrl, demoFilename, onUpload, t]);
 
   return (
     <div className="mb-4">
@@ -120,7 +125,7 @@ export default function FileUpload({
               <polyline points="13 2 13 9 20 9" />
               <path d="M20 9v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h7" />
             </svg>
-            {loadingDemo ? 'Loading…' : 'Use example'}
+            {loadingDemo ? t('fileupload.loading') : t('fileupload.use_example')}
           </button>
         )}
       </div>
@@ -137,11 +142,9 @@ export default function FileUpload({
             {currentFile}
           </div>
         ) : isDragActive ? (
-          <p className="text-primary-600">Drop the file here...</p>
+          <p className="text-primary-600">{t('fileupload.drop_active')}</p>
         ) : (
-          <p className="text-slate-500">
-            Drag & drop a file here, or click to select
-          </p>
+          <p className="text-slate-500">{t('fileupload.drop_idle')}</p>
         )}
       </div>
       {helpText && (

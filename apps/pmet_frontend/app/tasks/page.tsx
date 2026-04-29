@@ -5,9 +5,11 @@ import { taskApi } from '@/lib/api';
 import { TaskResponse } from '@/lib/types';
 import TaskCard from '@/components/TaskCard';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/i18n';
 
 export default function TasksPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [tasks, setTasks] = useState<TaskResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchEmail, setSearchEmail] = useState('');
@@ -48,25 +50,24 @@ export default function TasksPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">My Tasks</h1>
+        <h1 className="text-2xl font-bold">{t('tasks.title')}</h1>
         <button
           onClick={() => router.push('/submit')}
           className="btn-primary"
         >
-          New Analysis
+          {t('tasks.new')}
         </button>
       </div>
 
-      {/* Search by email */}
       <div className="card mb-6">
         <label className="block text-sm text-slate-600 mb-2">
-          Enter the email you used when submitting to see your tasks.
+          {t('tasks.search.label')}
         </label>
         <div className="flex gap-4">
           <input
             type="email"
             className="input-field flex-1"
-            placeholder="you@example.com"
+            placeholder={t('tasks.search.placeholder')}
             value={searchEmail}
             onChange={(e) => setSearchEmail(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -76,21 +77,20 @@ export default function TasksPage() {
             disabled={!searchEmail.trim()}
             className="btn-secondary disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Search
+            {t('tasks.search.button')}
           </button>
         </div>
       </div>
 
-      {/* Task list */}
       {!activeEmailFilter ? (
         <div className="text-center py-12 text-slate-500">
-          Enter your email above to look up your tasks.
+          {t('tasks.empty.no_email')}
         </div>
       ) : loading ? (
-        <div className="text-center py-12 text-slate-500">Loading tasks...</div>
+        <div className="text-center py-12 text-slate-500">{t('tasks.empty.loading')}</div>
       ) : tasks.length === 0 ? (
         <div className="text-center py-12 text-slate-500">
-          No tasks found for <span className="font-mono">{activeEmailFilter}</span>.
+          {t('tasks.empty.none_prefix')} <span className="font-mono">{activeEmailFilter}</span>.
         </div>
       ) : (
         <div className="space-y-4">

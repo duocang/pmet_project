@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslation } from '@/lib/i18n';
+
 interface ParameterPanelProps {
   mode: 'promoters_pre' | 'promoters' | 'intervals';
   params: {
@@ -27,6 +29,7 @@ interface ParameterPanelProps {
 const DISABLED_CLASS = 'disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed';
 
 export default function ParameterPanel({ mode, params, onChange, fixedParams }: ParameterPanelProps) {
+  const { t } = useTranslation();
   const isPre = mode === 'promoters_pre';
 
   // In promoters_pre, display values come from fixedParams (baked into the
@@ -65,11 +68,11 @@ export default function ParameterPanel({ mode, params, onChange, fixedParams }: 
 
   return (
     <div className="card">
-      <h3 className="text-lg font-semibold mb-4">Parameters</h3>
+      <h3 className="text-lg font-semibold mb-4">{t('params.heading')}</h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div>
-          <label className="label">Promoter Length</label>
+          <label className="label">{t('params.promoter_length')}</label>
           <select
             className={`select-field ${DISABLED_CLASS}`}
             value={promoterLengthValue}
@@ -83,7 +86,7 @@ export default function ParameterPanel({ mode, params, onChange, fixedParams }: 
         </div>
 
         <div>
-          <label className="label">Max Motif Matches</label>
+          <label className="label">{t('params.max_match')}</label>
           <select
             className={`select-field ${DISABLED_CLASS}`}
             value={maxMatchValue}
@@ -97,7 +100,7 @@ export default function ParameterPanel({ mode, params, onChange, fixedParams }: 
         </div>
 
         <div>
-          <label className="label">Number of Selected Promoters</label>
+          <label className="label">{t('params.promoter_num')}</label>
           <select
             className={`select-field ${DISABLED_CLASS}`}
             value={promoterNumValue}
@@ -111,7 +114,7 @@ export default function ParameterPanel({ mode, params, onChange, fixedParams }: 
         </div>
 
         <div>
-          <label className="label">FIMO Threshold</label>
+          <label className="label">{t('params.fimo_threshold')}</label>
           <select
             className={`select-field ${DISABLED_CLASS}`}
             value={fimoThresholdValue}
@@ -125,7 +128,7 @@ export default function ParameterPanel({ mode, params, onChange, fixedParams }: 
         </div>
 
         <div>
-          <label className="label">IC Threshold</label>
+          <label className="label">{t('params.ic_threshold')}</label>
           <select
             className={`select-field ${DISABLED_CLASS}`}
             value={icThresholdValue}
@@ -141,28 +144,28 @@ export default function ParameterPanel({ mode, params, onChange, fixedParams }: 
         {showUtrOverlap && (
           <>
             <div>
-              <label className="label">5&apos; UTR Included?</label>
+              <label className="label">{t('params.utr5')}</label>
               <select
                 className={`select-field ${DISABLED_CLASS}`}
                 value={utr5Value}
                 onChange={(e) => onChange({ utr5: e.target.value })}
                 disabled={isPre}
               >
-                <option value="Yes">Yes</option>
-                <option value="No">No</option>
+                <option value="Yes">{t('params.utr5.yes')}</option>
+                <option value="No">{t('params.utr5.no')}</option>
               </select>
             </div>
 
             <div>
-              <label className="label">Promoters Overlap?</label>
+              <label className="label">{t('params.overlap')}</label>
               <select
                 className={`select-field ${DISABLED_CLASS}`}
                 value={overlapValue}
                 onChange={(e) => onChange({ promoters_overlap: e.target.value })}
                 disabled={isPre}
               >
-                <option value="NoOverlap">No Overlap</option>
-                <option value="AllowOverlap">Allow Overlap</option>
+                <option value="NoOverlap">{t('params.overlap.no')}</option>
+                <option value="AllowOverlap">{t('params.overlap.allow')}</option>
               </select>
             </div>
           </>

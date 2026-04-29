@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { useTranslation } from '@/lib/i18n';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -293,6 +294,7 @@ function discardSharedMotifs(motifsMap: Record<string, string[]>): Record<string
 }
 
 export default function VisualizePage() {
+  const { t } = useTranslation();
   const [allResults, setAllResults] = useState<MotifResult[]>([]);
   const [fileName, setFileName] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -329,14 +331,14 @@ export default function VisualizePage() {
     setError(null);
     const lower = file.name.toLowerCase();
     if (!lower.endsWith('.txt') && !lower.endsWith('.tsv')) {
-      setError('Only .txt or .tsv files are accepted.');
+      setError(t('viz.err.bad_type'));
       return;
     }
     const reader = new FileReader();
     reader.onload = () => {
       const results = parsePmetFile(reader.result as string);
       if (results.length === 0) {
-        setError('No valid rows found. Expected a tab-separated PMET output file.');
+        setError(t('viz.err.no_rows'));
         return;
       }
       setAllResults(results);
@@ -345,25 +347,25 @@ export default function VisualizePage() {
       setTablePage(0);
     };
     reader.readAsText(file);
-  }, []);
+  }, [t]);
 
   const loadExample = useCallback(async () => {
     setError(null);
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
       const res = await fetch(`${API_URL}/api/demo/example-result`);
-      if (!res.ok) throw new Error('Failed to load example file');
+      if (!res.ok) throw new Error(t('viz.err.example_load'));
       const text = await res.text();
       const results = parsePmetFile(text);
-      if (results.length === 0) throw new Error('Empty example file');
+      if (results.length === 0) throw new Error(t('viz.err.example_empty'));
       setAllResults(results);
       setFileName('example_pmet_result.txt');
       setSelectedCluster('All');
       setTablePage(0);
     } catch {
-      setError('Failed to load example file.');
+      setError(t('viz.err.example_failed'));
     }
-  }, []);
+  }, [t]);
 
   const onDrop = useCallback(
     (e: React.DragEvent) => {
@@ -415,10 +417,10 @@ export default function VisualizePage() {
     if (allResults.length === 0 || !processed) return null;
     const allFiltered = Object.values(processed.filtered).flat();
     if (allFiltered.length === 0) {
-      return 'No records left after filtering. Consider a less restrictive p-value.';
+      return t('viz.err.no_filter_data');
     }
     return null;
-  }, [allResults, processed]);
+  }, [allResults, processed, t]);
 
   // Build heatmap data
   const heatmapData = useMemo(() => {
@@ -779,7 +781,7 @@ export default function VisualizePage() {
     if (entries.length === 0) return;
     const Plotly: any = (await import('plotly.js/dist/plotly' as any)).default ?? (window as any).Plotly;
     if (!Plotly?.toImage || !Plotly?.newPlot) {
-      alert('Plot library not ready. Please wait for the heatmap to render and try again.');
+      alert(t('viz.alert.plot_not_ready'));
       return;
     }
     const base = fileName.replace(/\.(txt|tsv)$/i, '') || 'pmet';
@@ -963,7 +965,7 @@ export default function VisualizePage() {
       a.click();
       URL.revokeObjectURL(url);
     }, 'image/png');
-  }, [fileName]);
+  }, [fileName, t]);
 
   const downloadTsv = useCallback(() => {
     if (tableData.length === 0) return;
@@ -984,13 +986,11 @@ export default function VisualizePage() {
   if (allResults.length === 0) {
     return (
       <div className="max-w-2xl mx-auto py-8">
-        <h1 className="text-2xl font-bold mb-2">Visualize PMET Results</h1>
-        <p className="text-slate-600 mb-8">
-          Upload a PMET output file (tab-separated) to explore your results with interactive heatmaps, motif summaries, and filterable data tables.
-        </p>
+        <h1 className="text-2xl font-bold mb-2">{t('viz.title')}</h1>
+        <p className="text-slate-600 mb-8">{t('viz.intro')}</p>
 
         <div className="card">
-          <h3 className="font-semibold mb-1 text-red-600">Choose a PMET result</h3>
+          <h3 className="font-semibold mb-1 text-red-600">{t('viz.choose.heading')}</h3>
           <div
             className={`border-2 border-dashed rounded-lg p-10 text-center transition-colors ${
               dragOver ? 'border-teal-400 bg-teal-50' : 'border-slate-300 hover:border-slate-400'
@@ -1005,9 +1005,9 @@ export default function VisualizePage() {
             <div className="space-y-3">
               <div className="text-4xl">&#128202;</div>
               <p className="text-slate-600">
-                Drag and drop your PMET output file here, or{' '}
+                {t('viz.dnd.before')}{' '}
                 <label className="text-teal-700 hover:text-teal-800 underline cursor-pointer">
-                  browse
+                  {t('viz.dnd.browse')}
                   <input
                     type="file"
                     className="hidden"
@@ -1019,12 +1019,12 @@ export default function VisualizePage() {
                   />
                 </label>
               </p>
-              <p className="text-xs text-slate-400">Accepts .txt or .tsv tab-separated PMET output</p>
+              <p className="text-xs text-slate-400">{t('viz.dnd.accepts')}</p>
             </div>
           </div>
 
           <button onClick={loadExample} className="mt-3 text-sm text-teal-700 hover:text-teal-800 underline">
-            Example file
+            {t('viz.example')}
           </button>
 
           {error && <div className="mt-4 text-sm text-red-600 bg-red-50 rounded p-3">{error}</div>}
@@ -1038,11 +1038,11 @@ export default function VisualizePage() {
       {/* Sidebar */}
       <div className="w-80 shrink-0 space-y-5">
         <div className="card">
-          <h3 className="font-semibold text-sm mb-3">File</h3>
+          <h3 className="font-semibold text-sm mb-3">{t('viz.side.file')}</h3>
           <p className="text-sm text-slate-700 truncate" title={fileName}>
             {fileName}
           </p>
-          <p className="text-xs text-slate-400">{allResults.length.toLocaleString()} rows</p>
+          <p className="text-xs text-slate-400">{allResults.length.toLocaleString()} {t('viz.side.rows')}</p>
           <div className="mt-3 flex gap-3">
             <button
               className="text-xs text-slate-500 hover:text-slate-700 underline"
@@ -1051,17 +1051,17 @@ export default function VisualizePage() {
                 setFileName('');
               }}
             >
-              Upload another
+              {t('viz.side.upload_another')}
             </button>
             <button onClick={loadExample} className="text-xs text-teal-700 hover:text-teal-800 underline">
-              Example file
+              {t('viz.example')}
             </button>
           </div>
         </div>
 
         <div className="card space-y-4">
           <div>
-            <label className="block text-sm font-semibold mb-1">Motif-pair UNIQUE in each cluster:</label>
+            <label className="block text-sm font-semibold mb-1">{t('viz.filter.unique')}</label>
             <select
               className="w-full border rounded px-3 py-1.5 text-sm"
               value={uniquePairs ? 'TRUE' : 'FALSE'}
@@ -1076,7 +1076,7 @@ export default function VisualizePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-1">Choose a cluster:</label>
+            <label className="block text-sm font-semibold mb-1">{t('viz.filter.cluster')}</label>
             <select
               className="w-full border rounded px-3 py-1.5 text-sm"
               value={selectedCluster}
@@ -1094,7 +1094,7 @@ export default function VisualizePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-1">Top motif-pair:</label>
+            <label className="block text-sm font-semibold mb-1">{t('viz.filter.topn')}</label>
             <input
               type="number"
               className="w-full border rounded px-3 py-1.5 text-sm"
@@ -1112,7 +1112,7 @@ export default function VisualizePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-1">P.adj:</label>
+            <label className="block text-sm font-semibold mb-1">{t('viz.filter.padj')}</label>
             <input
               type="number"
               className="w-full border rounded px-3 py-1.5 text-sm"
@@ -1139,9 +1139,9 @@ export default function VisualizePage() {
         <div className="border-b mb-4 flex gap-0">
           {(
             [
-              ['heatmap', 'Heat map'],
-              ['motifs', 'Motifs'],
-              ['data', 'Data viewer'],
+              ['heatmap', t('viz.tabs.heatmap')],
+              ['motifs', t('viz.tabs.motifs')],
+              ['data', t('viz.tabs.data')],
             ] as [ActiveTab, string][]
           ).map(([key, label]) => (
             <button
@@ -1160,7 +1160,7 @@ export default function VisualizePage() {
         {activeTab === 'heatmap' &&
           (() => {
             if (!heatmapData || pAdjWarning) {
-              return <div className="text-center py-12 text-slate-500">{pAdjWarning || 'No data available for the current filter settings.'}</div>;
+              return <div className="text-center py-12 text-slate-500">{pAdjWarning || t('viz.empty.filtered')}</div>;
             }
 
             const axisBase = {
@@ -1476,16 +1476,16 @@ export default function VisualizePage() {
                     className={`px-3 py-1 text-xs rounded border transition-colors ${
                       showAxes ? 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50' : 'bg-teal-50 text-teal-700 border-teal-300 hover:bg-teal-100'
                     }`}
-                    title={showAxes ? 'Hide axis labels to make heatmaps compact' : 'Show axis labels'}
+                    title={showAxes ? t('viz.heat.axes.hide.tip') : t('viz.heat.axes.show.tip')}
                   >
-                    {showAxes ? 'Hide Axes' : 'Show Axes'}
+                    {showAxes ? t('viz.heat.axes.hide.label') : t('viz.heat.axes.show.label')}
                   </button>
                   <button
                     onClick={downloadHeatmap}
                     className="px-3 py-1 text-xs rounded border border-teal-600 bg-teal-600 text-white hover:bg-teal-700"
-                    title="Download heatmap as high-resolution PNG"
+                    title={t('viz.heat.download.tip')}
                   >
-                    Download PNG
+                    {t('viz.heat.download.button')}
                   </button>
                 </div>
 
@@ -1594,15 +1594,15 @@ export default function VisualizePage() {
           <div className="card">
             <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
               <div>
-                <h3 className="font-semibold">Top Motifs per Cluster</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Motifs exclusive to a cluster are highlighted; shared motifs appear dimmed.</p>
+                <h3 className="font-semibold">{t('viz.motifs.heading')}</h3>
+                <p className="text-xs text-slate-500 mt-0.5">{t('viz.motifs.subhead')}</p>
               </div>
               <button
                 onClick={downloadMotifsTsv}
                 disabled={!motifsByCluster || motifsByCluster.length === 0}
                 className="px-3 py-1.5 text-sm border rounded bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-40 whitespace-nowrap"
               >
-                Download TSV
+                {t('viz.motifs.download')}
               </button>
             </div>
 
@@ -1620,13 +1620,13 @@ export default function VisualizePage() {
                           {c.exclusiveCount > 0 && (
                             <span>
                               {' '}
-                              · <span className="font-medium text-slate-700">{c.exclusiveCount}</span> exclusive
+                              · <span className="font-medium text-slate-700">{c.exclusiveCount}</span> {t('viz.motifs.exclusive_suffix')}
                             </span>
                           )}
                         </span>
                       </div>
                       <button onClick={() => copyClusterMotifs(c.all)} className="text-xs text-teal-700 hover:text-teal-800 underline whitespace-nowrap">
-                        Copy
+                        {t('viz.motifs.copy')}
                       </button>
                     </div>
                     <div className="flex flex-wrap gap-1.5 p-3 bg-white">
@@ -1635,7 +1635,7 @@ export default function VisualizePage() {
                         return (
                           <span
                             key={m}
-                            title={excl ? 'Exclusive to this cluster' : 'Shared with other clusters'}
+                            title={excl ? t('viz.motifs.tip.exclusive') : t('viz.motifs.tip.shared')}
                             className="text-xs font-mono rounded px-2 py-0.5 border"
                             style={
                               excl
@@ -1661,7 +1661,7 @@ export default function VisualizePage() {
                 ))}
               </div>
             ) : (
-              <p className="text-slate-500">No motifs to display with current filter settings.</p>
+              <p className="text-slate-500">{t('viz.motifs.empty')}</p>
             )}
           </div>
         )}
@@ -1670,11 +1670,11 @@ export default function VisualizePage() {
         {activeTab === 'data' && (
           <div className="card">
             <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-              <h3 className="font-semibold">Data Viewer ({tableData.length.toLocaleString()} rows)</h3>
+              <h3 className="font-semibold">{t('viz.data.heading_prefix')} ({tableData.length.toLocaleString()} {t('viz.data.rows_suffix')})</h3>
               <div className="flex items-center gap-3">
                 <input
                   type="text"
-                  placeholder="Search cluster, motif, gene..."
+                  placeholder={t('viz.data.search')}
                   className="border rounded px-3 py-1.5 text-sm w-56"
                   value={searchQuery}
                   onChange={(e) => {
@@ -1687,7 +1687,7 @@ export default function VisualizePage() {
                   disabled={tableData.length === 0}
                   className="px-3 py-1.5 text-sm border rounded bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-40 whitespace-nowrap"
                 >
-                  Download TSV
+                  {t('viz.data.download')}
                 </button>
               </div>
             </div>
@@ -1697,13 +1697,13 @@ export default function VisualizePage() {
                   <tr className="border-b bg-slate-50">
                     {(
                       [
-                        ['cluster', 'Cluster', 'text-left', 'Cluster the motif pair was tested in'],
-                        ['motif1', 'Motif 1', 'text-left', ''],
-                        ['motif2', 'Motif 2', 'text-left', ''],
-                        ['gene_num', 'Genes', 'text-right', 'Genes co-occurring with both motifs / total genes in the background universe'],
-                        ['p_value', 'P-value', 'text-right', 'Raw enrichment p-value'],
-                        ['p_adj_bh', 'P.adj (BH)', 'text-right', 'Benjamini–Hochberg adjusted p-value'],
-                        ['p_adj_bonf', 'P.adj (Bonf)', 'text-right', 'Bonferroni adjusted p-value'],
+                        ['cluster', t('viz.data.col.cluster'), 'text-left', t('viz.data.tooltip.cluster')],
+                        ['motif1', t('viz.data.col.motif1'), 'text-left', ''],
+                        ['motif2', t('viz.data.col.motif2'), 'text-left', ''],
+                        ['gene_num', t('viz.data.col.genes'), 'text-right', t('viz.data.tooltip.genes')],
+                        ['p_value', t('viz.data.col.pvalue'), 'text-right', t('viz.data.tooltip.pvalue')],
+                        ['p_adj_bh', t('viz.data.col.padj_bh'), 'text-right', t('viz.data.tooltip.padj_bh')],
+                        ['p_adj_bonf', t('viz.data.col.padj_bonf'), 'text-right', t('viz.data.tooltip.padj_bonf')],
                       ] as [string, string, string, string][]
                     ).map(([col, label, align, tip]) => (
                       <th
@@ -1743,7 +1743,7 @@ export default function VisualizePage() {
                   {pageData.length === 0 && (
                     <tr>
                       <td colSpan={7} className="py-8 text-center text-slate-500">
-                        No results match the current filters.
+                        {t('viz.data.empty')}
                       </td>
                     </tr>
                   )}
@@ -1752,7 +1752,7 @@ export default function VisualizePage() {
             </div>
             <div className="flex items-center justify-between mt-4 pt-4 border-t">
               <div className="flex items-center gap-2 text-sm text-slate-500">
-                <span>Show</span>
+                <span>{t('viz.page.show')}</span>
                 <select
                   className="border rounded px-2 py-1 text-sm"
                   value={pageSize}
@@ -1767,21 +1767,21 @@ export default function VisualizePage() {
                     </option>
                   ))}
                 </select>
-                <span>per page</span>
+                <span>{t('viz.page.per_page')}</span>
               </div>
               <div className="flex items-center gap-3">
                 <button className="px-3 py-1 text-sm border rounded hover:bg-slate-50 disabled:opacity-40" disabled={tablePage === 0} onClick={() => setTablePage(tablePage - 1)}>
-                  Previous
+                  {t('viz.page.prev')}
                 </button>
                 <span className="text-sm text-slate-500">
-                  Page {tablePage + 1} of {Math.max(tablePages, 1).toLocaleString()}
+                  {t('viz.page.page_of_prefix')} {tablePage + 1} {t('viz.page.page_of_mid')} {Math.max(tablePages, 1).toLocaleString()}
                 </span>
                 <button
                   className="px-3 py-1 text-sm border rounded hover:bg-slate-50 disabled:opacity-40"
                   disabled={tablePage >= tablePages - 1}
                   onClick={() => setTablePage(tablePage + 1)}
                 >
-                  Next
+                  {t('viz.page.next')}
                 </button>
               </div>
             </div>
@@ -1808,12 +1808,12 @@ export default function VisualizePage() {
                 <div>
                   {hasTabs ? (
                     <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">
-                      Overlapped in{' '}
-                      <span className="font-semibold text-slate-700">{overlap!.length} clusters</span>
+                      {t('viz.modal.overlap_in')}{' '}
+                      <span className="font-semibold text-slate-700">{overlap!.length} {t('viz.modal.clusters_suffix')}</span>
                     </div>
                   ) : view.cluster && (
                     <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">
-                      Cluster:{' '}
+                      {t('viz.modal.cluster_label')}{' '}
                       <span className="font-semibold" style={{ color: view.color }}>
                         {view.cluster}
                       </span>
@@ -1855,27 +1855,27 @@ export default function VisualizePage() {
               <div className="px-6 py-4 overflow-y-auto">
                 <div className="grid grid-cols-3 gap-4 mb-5">
                   <div className="bg-slate-50 rounded p-3">
-                    <div className="text-xs text-slate-500 mb-1">-log10(p.adj)</div>
+                    <div className="text-xs text-slate-500 mb-1">{t('viz.modal.metric.logp')}</div>
                     <div className="text-xl font-bold text-slate-800">{view.logp.toFixed(3)}</div>
                   </div>
                   <div className="bg-slate-50 rounded p-3">
-                    <div className="text-xs text-slate-500 mb-1">Adj. P-value</div>
+                    <div className="text-xs text-slate-500 mb-1">{t('viz.modal.metric.padj')}</div>
                     <div className="text-xl font-bold text-slate-800 font-mono">{view.pAdj.toExponential(2)}</div>
                   </div>
                   <div className="bg-slate-50 rounded p-3">
-                    <div className="text-xs text-slate-500 mb-1">Genes</div>
+                    <div className="text-xs text-slate-500 mb-1">{t('viz.modal.metric.genes')}</div>
                     <div className="text-xl font-bold text-slate-800">{view.genes.length}</div>
                   </div>
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-sm text-slate-700">Gene list</h4>
+                    <h4 className="font-semibold text-sm text-slate-700">{t('viz.modal.gene_list')}</h4>
                     <button
                       onClick={() => { navigator.clipboard?.writeText(view.genes.join('\n')); }}
                       className="text-xs text-teal-700 hover:text-teal-800 underline"
                     >
-                      Copy to clipboard
+                      {t('viz.modal.copy')}
                     </button>
                   </div>
                   <div className="flex flex-wrap gap-1.5 bg-slate-50 rounded p-3 max-h-64 overflow-y-auto">
@@ -1890,7 +1890,7 @@ export default function VisualizePage() {
 
               <div className="px-6 py-3 border-t bg-slate-50 flex justify-end rounded-b-lg">
                 <button onClick={() => setClickedCell(null)} className="px-4 py-1.5 text-sm border rounded bg-white hover:bg-slate-100">
-                  Close
+                  {t('viz.modal.close')}
                 </button>
               </div>
             </div>

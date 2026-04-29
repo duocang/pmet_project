@@ -15,8 +15,10 @@ import {
   IndexingMotifDbDetail,
 } from '@/lib/api';
 import { useSettingsStore, useTaskStore } from '@/lib/store';
+import { useTranslation } from '@/lib/i18n';
 
 function SubmitPageContent() {
+  const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlMode = searchParams.get('mode') as AnalysisMode | null;
@@ -160,43 +162,43 @@ function SubmitPageContent() {
 
   const validateForm = (): boolean => {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      toast.error('Please enter a valid email address');
+      toast.error(t('submit.toast.invalid_email'));
       return false;
     }
 
     if (!uploadedPaths.genes && !files.genes) {
-      toast.error('Please upload a gene file');
+      toast.error(t('submit.toast.upload_genes'));
       return false;
     }
 
     if (mode === 'promoters') {
       if (!uploadedPaths.fasta && !files.fasta) {
-        toast.error('Please upload a genome file');
+        toast.error(t('submit.toast.upload_genome'));
         return false;
       }
       if (!uploadedPaths.gff3 && !files.gff3) {
-        toast.error('Please upload an annotation file');
+        toast.error(t('submit.toast.upload_annotation'));
         return false;
       }
       if (!uploadedPaths.meme && !files.meme) {
-        toast.error('Please upload a motif file');
+        toast.error(t('submit.toast.upload_motif'));
         return false;
       }
     }
 
     if (mode === 'intervals') {
       if (!uploadedPaths.fasta && !files.fasta) {
-        toast.error('Please upload a genome file');
+        toast.error(t('submit.toast.upload_genome'));
         return false;
       }
       if (!uploadedPaths.meme && !files.meme) {
-        toast.error('Please upload a motif file');
+        toast.error(t('submit.toast.upload_motif'));
         return false;
       }
     }
 
     if (mode === 'promoters_pre' && !files.premade_index) {
-      toast.error('Please select a pre-computed database');
+      toast.error(t('submit.toast.pick_db'));
       return false;
     }
 
@@ -261,10 +263,10 @@ function SubmitPageContent() {
       const task = await taskApi.create(taskData);
       addTask(task);
 
-      toast.success('Task submitted successfully! You will receive an email when results are ready.');
+      toast.success(t('submit.toast.success'));
       router.push(`/tasks/${task.task_id}`);
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Failed to submit task');
+      toast.error(error.response?.data?.detail || t('submit.toast.failed'));
       console.error(error);
     } finally {
       setSubmitting(false);
@@ -272,19 +274,19 @@ function SubmitPageContent() {
     }
   };
 
-  const modeLabels = {
-    promoters_pre: 'Pre-computed Promoters',
-    promoters: 'Full Promoters',
-    intervals: 'Intervals',
+  const modeLabels: Record<AnalysisMode, string> = {
+    promoters_pre: t('submit.mode.promoters_pre'),
+    promoters: t('submit.mode.promoters'),
+    intervals: t('submit.mode.intervals'),
   };
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Submit New Analysis</h1>
+      <h1 className="text-2xl font-bold mb-6">{t('submit.title')}</h1>
 
       {/* Mode Selection */}
       <div className="card mb-6">
-        <h3 className="text-lg font-semibold mb-4">Analysis Mode</h3>
+        <h3 className="text-lg font-semibold mb-4">{t('submit.mode.heading')}</h3>
         <div className="flex gap-4">
           {(['promoters_pre', 'promoters', 'intervals'] as AnalysisMode[]).map((m) => (
             <button
@@ -304,24 +306,24 @@ function SubmitPageContent() {
 
       {/* Email */}
       <div className="card mb-6">
-        <label className="label">Email Address *</label>
+        <label className="label">{t('submit.email.label')}</label>
         <input
           type="email"
           className="input-field"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="your@email.com"
+          placeholder={t('submit.email.placeholder')}
         />
-        <p className="mt-1 text-sm text-slate-500">Results will be sent to this email</p>
+        <p className="mt-1 text-sm text-slate-500">{t('submit.email.help')}</p>
       </div>
 
       {/* Pre-computed Selection */}
       {mode === 'promoters_pre' && (
         <div className="card mb-6">
-          <h3 className="text-lg font-semibold mb-4">Pre-computed Database</h3>
+          <h3 className="text-lg font-semibold mb-4">{t('submit.db.heading')}</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="label">Species</label>
+              <label className="label">{t('submit.db.species')}</label>
               <select
                 className="select-field"
                 value={selectedSpecies}
@@ -330,14 +332,14 @@ function SubmitPageContent() {
                   updateFiles({ premade_index: '' });
                 }}
               >
-                <option value="">Select a species...</option>
+                <option value="">{t('submit.db.species.placeholder')}</option>
                 {speciesList.map((sp) => (
                   <option key={sp} value={sp}>{humanize(sp)}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="label">Motif Database</label>
+              <label className="label">{t('submit.db.motif')}</label>
               <select
                 className="select-field"
                 value={files.premade_index}
@@ -345,7 +347,7 @@ function SubmitPageContent() {
                 disabled={!selectedSpecies}
               >
                 <option value="">
-                  {selectedSpecies ? 'Select a database...' : 'Select a species first'}
+                  {selectedSpecies ? t('submit.db.motif.placeholder') : t('submit.db.motif.placeholder_pick_species')}
                 </option>
                 {motifDbOptions.map((entry) => (
                   <option key={entry.value} value={entry.value}>
@@ -358,9 +360,9 @@ function SubmitPageContent() {
 
           {indexingEntries.length === 0 && (
             <p className="mt-2 text-sm text-slate-500">
-              No pre-computed databases found on the server. Run
+              {t('submit.db.empty.before')}
               <code className="mx-1 px-1 bg-slate-100 rounded">make fetch-data</code>
-              on the host to download them into <code className="px-1 bg-slate-100 rounded">data/indexing/</code>.
+              {t('submit.db.empty.after')} <code className="px-1 bg-slate-100 rounded">data/indexing/</code>.
             </p>
           )}
 
@@ -376,7 +378,7 @@ function SubmitPageContent() {
                   {/* Species block */}
                   <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
                     <h4 className="text-xs font-semibold tracking-wide text-slate-500 uppercase mb-2">
-                      Species
+                      {t('submit.db.detail.species')}
                     </h4>
                     <div className="text-primary-700 font-medium mb-3">
                       {currentSpecies?.humanized ?? humanize(selectedSpecies)}
@@ -388,7 +390,7 @@ function SubmitPageContent() {
                     )}
                     {currentSpecies?.genome_name && (
                       <div className="text-sm mb-1">
-                        <span className="text-slate-500">Genome: </span>
+                        <span className="text-slate-500">{t('submit.db.detail.genome')} </span>
                         {currentSpecies.genome_link ? (
                           <a
                             href={currentSpecies.genome_link}
@@ -405,7 +407,7 @@ function SubmitPageContent() {
                     )}
                     {currentSpecies?.annotation_name && (
                       <div className="text-sm mb-3">
-                        <span className="text-slate-500">Annotation: </span>
+                        <span className="text-slate-500">{t('submit.db.detail.annotation')} </span>
                         {currentSpecies.annotation_link ? (
                           <a
                             href={currentSpecies.annotation_link}
@@ -422,7 +424,7 @@ function SubmitPageContent() {
                     )}
                     {currentSpecies && (
                       <div className="text-sm">
-                        <div className="text-slate-500 mb-1">Genes:</div>
+                        <div className="text-slate-500 mb-1">{t('submit.db.detail.genes')}</div>
                         <ul className="list-disc list-inside text-slate-700 mb-1 ml-1">
                           {currentSpecies.gene_sample.map((g) => (
                             <li key={g}>{g}</li>
@@ -432,23 +434,23 @@ function SubmitPageContent() {
                           )}
                         </ul>
                         <div className="text-emerald-700 font-medium">
-                          Total: {currentSpecies.gene_count.toLocaleString()}
+                          {t('submit.db.detail.total')} {currentSpecies.gene_count.toLocaleString()}
                         </div>
                       </div>
                     )}
                     {!currentSpecies && speciesLoading && (
-                      <div className="text-sm text-slate-500">Loading…</div>
+                      <div className="text-sm text-slate-500">{t('submit.db.detail.loading')}</div>
                     )}
                   </div>
 
                   {/* Motif DB block */}
                   <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
                     <h4 className="text-xs font-semibold tracking-wide text-slate-500 uppercase mb-2">
-                      Motif Database
+                      {t('submit.db.detail.motif')}
                     </h4>
                     {!files.premade_index ? (
                       <p className="text-sm text-slate-500 italic">
-                        Select a motif database to see its contents.
+                        {t('submit.db.detail.pick_motif')}
                       </p>
                     ) : (
                       <>
@@ -470,7 +472,7 @@ function SubmitPageContent() {
                         </div>
                         {currentMotifDb && (
                           <div className="text-sm">
-                            <div className="text-slate-500 mb-1">Motifs:</div>
+                            <div className="text-slate-500 mb-1">{t('submit.db.detail.motifs')}</div>
                             <ul className="list-disc list-inside text-slate-700 mb-1 ml-1">
                               {currentMotifDb.motif_sample.map((m) => (
                                 <li key={m}>{m}</li>
@@ -480,12 +482,12 @@ function SubmitPageContent() {
                               )}
                             </ul>
                             <div className="text-emerald-700 font-medium">
-                              Total: {currentMotifDb.motif_count.toLocaleString()}
+                              {t('submit.db.detail.total')} {currentMotifDb.motif_count.toLocaleString()}
                             </div>
                           </div>
                         )}
                         {!currentMotifDb && motifDbLoading && (
-                          <div className="text-sm text-slate-500">Loading…</div>
+                          <div className="text-sm text-slate-500">{t('submit.db.detail.loading')}</div>
                         )}
                       </>
                     )}
@@ -499,7 +501,7 @@ function SubmitPageContent() {
                 aria-expanded={detailOpen}
                 className="mt-3 w-full flex items-center justify-center gap-2 py-2 border-t border-slate-200 text-sm text-primary-700 hover:text-primary-800 hover:bg-slate-50 transition-colors"
               >
-                <span>{detailOpen ? 'Hide details' : 'Show details'}</span>
+                <span>{detailOpen ? t('submit.db.detail.hide') : t('submit.db.detail.show')}</span>
                 <svg
                   width="14"
                   height="14"
@@ -522,9 +524,11 @@ function SubmitPageContent() {
       {/* File Uploads */}
       <div className="card mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Upload Files</h3>
+          <h3 className="text-lg font-semibold">{t('submit.upload.heading')}</h3>
           <span className="text-xs text-slate-500">
-            New here? Use the <span className="font-medium text-primary-700">Use example</span> link on any field to load a sample file.
+            {t('submit.upload.example_hint_pre')}{' '}
+            <span className="font-medium text-primary-700">{t('submit.upload.example_hint_link')}</span>{' '}
+            {t('submit.upload.example_hint_post')}
           </span>
         </div>
 
@@ -532,7 +536,7 @@ function SubmitPageContent() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 [&>*]:mb-0">
           {(mode === 'promoters' || mode === 'intervals') && (
             <FileUpload
-              label={mode === 'intervals' ? 'Intervals (FASTA)' : 'Genome File'}
+              label={mode === 'intervals' ? t('submit.upload.label.intervals_fa') : t('submit.upload.label.genome')}
               accept=".fasta,.fa,.fasta.gz,.fa.gz"
               onUpload={(file) => handleFileUpload(file, 'fasta')}
               currentFile={files.fasta?.name}
@@ -544,7 +548,7 @@ function SubmitPageContent() {
 
           {mode === 'promoters' && (
             <FileUpload
-              label="Annotation File"
+              label={t('submit.upload.label.annotation')}
               accept=".gff3,.gff,.gff3.gz,.gff.gz"
               onUpload={(file) => handleFileUpload(file, 'gff3')}
               currentFile={files.gff3?.name}
@@ -556,7 +560,7 @@ function SubmitPageContent() {
 
           {(mode === 'promoters' || mode === 'intervals') && (
             <FileUpload
-              label="Motif Database"
+              label={t('submit.upload.label.motif')}
               accept=".meme"
               onUpload={(file) => handleFileUpload(file, 'meme')}
               currentFile={files.meme?.name}
@@ -568,11 +572,11 @@ function SubmitPageContent() {
 
           <div className={mode === 'promoters_pre' ? 'md:col-span-2' : ''}>
             <FileUpload
-              label={mode === 'intervals' ? 'Peaks / Intervals List' : 'Gene List'}
+              label={mode === 'intervals' ? t('submit.upload.label.peaks') : t('submit.upload.label.gene_list')}
               accept=".txt,.tsv"
               onUpload={(file) => handleFileUpload(file, 'genes')}
               currentFile={files.genes?.name}
-              helpText="Tab-separated file with cluster and gene/peak columns"
+              helpText={t('submit.upload.help.gene_list')}
               required
               demoUrl={`/api/demo/${mode}/genes`}
               demoFilename={mode === 'intervals' ? 'peaks.txt' : 'example_genes.txt'}
@@ -596,16 +600,21 @@ function SubmitPageContent() {
           disabled={submitting}
           className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {submitting ? 'Submitting...' : 'Submit Analysis'}
+          {submitting ? t('submit.button.submitting') : t('submit.button.submit')}
         </button>
       </div>
     </div>
   );
 }
 
+function SubmitFallback() {
+  const { t } = useTranslation();
+  return <div className="text-center py-12">{t('submit.suspense.loading')}</div>;
+}
+
 export default function SubmitPage() {
   return (
-    <Suspense fallback={<div className="text-center py-12">Loading...</div>}>
+    <Suspense fallback={<SubmitFallback />}>
       <SubmitPageContent />
     </Suspense>
   );

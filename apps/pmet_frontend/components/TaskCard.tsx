@@ -3,19 +3,23 @@
 import { TaskResponse } from '@/lib/types';
 import TaskStatusBadge from './TaskStatusBadge';
 import { taskApi } from '@/lib/api';
+import { useTranslation } from '@/lib/i18n';
+import { TranslationKey } from '@/lib/translations';
 
 interface TaskCardProps {
   task: TaskResponse;
   onSelect?: () => void;
 }
 
-const modeLabels: Record<string, string> = {
-  promoters_pre: 'Pre-computed Promoters',
-  promoters: 'Full Promoters',
-  intervals: 'Intervals',
+const MODE_KEYS: Record<string, TranslationKey> = {
+  promoters_pre: 'mode.promoters_pre',
+  promoters: 'mode.promoters',
+  intervals: 'mode.intervals',
 };
 
 export default function TaskCard({ task, onSelect }: TaskCardProps) {
+  const { t } = useTranslation();
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleString();
@@ -26,18 +30,18 @@ export default function TaskCard({ task, onSelect }: TaskCardProps) {
       <div className="flex justify-between items-start mb-3">
         <div>
           <h3 className="font-medium text-slate-900">{task.task_id}</h3>
-          <p className="text-sm text-slate-500">{modeLabels[task.mode]}</p>
+          <p className="text-sm text-slate-500">{t(MODE_KEYS[task.mode])}</p>
         </div>
         <TaskStatusBadge status={task.status} />
       </div>
 
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
-          <span className="text-slate-500">Email:</span>
+          <span className="text-slate-500">{t('taskcard.email')}</span>
           <span className="ml-2">{task.email}</span>
         </div>
         <div>
-          <span className="text-slate-500">Created:</span>
+          <span className="text-slate-500">{t('taskcard.created')}</span>
           <span className="ml-2">{formatDate(task.created_at)}</span>
         </div>
       </div>
@@ -49,7 +53,7 @@ export default function TaskCard({ task, onSelect }: TaskCardProps) {
             className="btn-primary inline-block text-sm"
             onClick={(e) => e.stopPropagation()}
           >
-            Download Results
+            {t('taskcard.download')}
           </a>
         </div>
       )}

@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { taskApi, resultsApi } from '@/lib/api';
 import { TaskResponse } from '@/lib/types';
+import { useTranslation } from '@/lib/i18n';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -49,6 +50,7 @@ const PAGE_SIZE = 100;
 
 export default function VisualizePage({ params }: PageProps) {
   const { id } = params;
+  const { t } = useTranslation();
   const [task, setTask] = useState<TaskResponse | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [results, setResults] = useState<MotifResult[]>([]);
@@ -60,7 +62,6 @@ export default function VisualizePage({ params }: PageProps) {
   const [tableLoading, setTableLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Heatmap data: top significant pairs
   const [heatmapResults, setHeatmapResults] = useState<MotifResult[]>([]);
 
   useEffect(() => {
@@ -73,11 +74,9 @@ export default function VisualizePage({ params }: PageProps) {
         setTask(taskRes);
         setSummary(summaryRes);
 
-        // Fetch significant pairs for heatmap (top 500 with p < 0.05)
         const heatmapRes = await resultsApi.get(id, { p_adj_max: 0.05, limit: 500 });
         setHeatmapResults(heatmapRes.results);
 
-        // Fetch first page of table data
         const tableRes = await resultsApi.get(id, { limit: PAGE_SIZE, offset: 0 });
         setResults(tableRes.results);
         setTotalMatched(tableRes.total_matched);
@@ -85,16 +84,16 @@ export default function VisualizePage({ params }: PageProps) {
         console.error('Failed to fetch data:', err);
         if (err?.response?.status === 404) {
           try { setTask(await taskApi.get(id)); } catch { /* ignore */ }
-          setError('Results not available yet. Please wait for the analysis to complete.');
+          setError(t('tviz.err.not_ready'));
         } else {
-          setError('Failed to load results.');
+          setError(t('tviz.err.failed'));
         }
       } finally {
         setLoading(false);
       }
     };
     init();
-  }, [id]);
+  }, [id, t]);
 
   const fetchPage = useCallback(async (
     newPage: number,
@@ -127,21 +126,20 @@ export default function VisualizePage({ params }: PageProps) {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto text-center py-12">Loading visualization...</div>
+      <div className="max-w-6xl mx-auto text-center py-12">{t('tviz.loading')}</div>
     );
   }
 
   if (!task) {
     return (
       <div className="max-w-6xl mx-auto text-center py-12">
-        <p className="text-slate-500">Task not found</p>
+        <p className="text-slate-500">{t('task.not_found')}</p>
       </div>
     );
   }
 
   const totalPages = Math.ceil(totalMatched / PAGE_SIZE);
 
-  // Build heatmap matrix from significant results
   const heatmapData = (() => {
     if (heatmapResults.length === 0) return null;
     const data = selectedCluster
@@ -166,11 +164,11 @@ export default function VisualizePage({ params }: PageProps) {
     <div className="max-w-6xl mx-auto">
       <div className="flex items-center gap-2 mb-6">
         <Link href={`/tasks/${id}`} className="text-slate-500 hover:text-slate-700">
-          &larr; Back to task
+          {t('tviz.back')}
         </Link>
       </div>
 
-      <h1 className="text-2xl font-bold mb-6">Results Visualization</h1>
+      <h1 className="text-2xl font-bold mb-6">{t('tviz.title')}</h1>
 
       {error && (
         <div className="card mb-6 text-center py-12 text-slate-500">
@@ -180,65 +178,62 @@ export default function VisualizePage({ params }: PageProps) {
 
       {summary && (
         <>
-          {/* Summary stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="card text-center">
               <div className="text-2xl font-bold text-teal-700">{summary.total_pairs.toLocaleString()}</div>
-              <div className="text-sm text-slate-500">Total Pairs</div>
+              <div className="text-sm text-slate-500">{t('tviz.stats.total')}</div>
             </div>
             <div className="card text-center">
               <div className="text-2xl font-bold text-teal-700">{summary.num_clusters}</div>
-              <div className="text-sm text-slate-500">Clusters</div>
+              <div className="text-sm text-slate-500">{t('tviz.stats.clusters')}</div>
             </div>
             <div className="card text-center">
               <div className="text-2xl font-bold text-teal-700">{summary.num_unique_motifs}</div>
-              <div className="text-sm text-slate-500">Unique Motifs</div>
+              <div className="text-sm text-slate-500">{t('tviz.stats.motifs')}</div>
             </div>
             <div className="card text-center">
               <div className="text-2xl font-bold text-teal-700">{summary.significant_pairs_005.toLocaleString()}</div>
-              <div className="text-sm text-slate-500">Significant (p &lt; 0.05)</div>
+              <div className="text-sm text-slate-500">{t('tviz.stats.sig')}</div>
             </div>
           </div>
 
-          {/* Filters */}
           <div className="card mb-6 flex flex-wrap gap-4 items-end">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Cluster</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t('tviz.filter.cluster')}</label>
               <select
                 className="border rounded px-3 py-1.5 text-sm"
                 value={selectedCluster}
                 onChange={(e) => handleFilterChange(e.target.value, pAdjMax)}
               >
-                <option value="">All Clusters</option>
+                <option value="">{t('tviz.filter.cluster_all')}</option>
                 {summary.clusters.map(c => (
                   <option key={c.name} value={c.name}>
-                    {c.name} ({c.count.toLocaleString()} pairs)
+                    {c.name} ({c.count.toLocaleString()} {t('tviz.filter.cluster_pairs_suffix')})
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Max Adj. P-value</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t('tviz.filter.padj_max')}</label>
               <select
                 className="border rounded px-3 py-1.5 text-sm"
                 value={pAdjMax}
                 onChange={(e) => handleFilterChange(selectedCluster, Number(e.target.value))}
               >
-                <option value={1.0}>All</option>
+                <option value={1.0}>{t('tviz.filter.padj_all')}</option>
                 <option value={0.05}>≤ 0.05</option>
                 <option value={0.01}>≤ 0.01</option>
                 <option value={0.001}>≤ 0.001</option>
               </select>
             </div>
             <div className="text-sm text-slate-500">
-              {totalMatched.toLocaleString()} matched pairs
+              {totalMatched.toLocaleString()} {t('tviz.matched_pairs_suffix')}
             </div>
           </div>
 
-          {/* P-value distribution histogram */}
           {summary.histogram && (
             <div className="card mb-6">
-              <h3 className="font-semibold mb-4">Adjusted P-value Distribution</h3>
+              <h3 className="font-semibold mb-4">{t('tviz.histogram.title')}</h3>
               <div className="h-72">
                 <Plot
                   data={[{
@@ -264,11 +259,10 @@ export default function VisualizePage({ params }: PageProps) {
             </div>
           )}
 
-          {/* Heatmap */}
           <div className="card mb-6">
             <h3 className="font-semibold mb-4">
-              Motif Pair Enrichment Heatmap
-              <span className="text-sm font-normal text-slate-400 ml-2">(significant pairs, p &lt; 0.05)</span>
+              {t('tviz.heatmap.title')}
+              <span className="text-sm font-normal text-slate-400 ml-2">{t('tviz.heatmap.subtitle')}</span>
             </h3>
             {heatmapData ? (
               <div style={{ height: Math.max(400, heatmapData.y.length * 18 + 120) }}>
@@ -292,33 +286,30 @@ export default function VisualizePage({ params }: PageProps) {
                 />
               </div>
             ) : (
-              <div className="text-center py-8 text-slate-500">
-                No significant pairs (p &lt; 0.05) found for heatmap display.
-              </div>
+              <div className="text-center py-8 text-slate-500">{t('tviz.heatmap.empty')}</div>
             )}
           </div>
 
-          {/* Results table with server-side pagination */}
           <div className="card">
             <h3 className="font-semibold mb-4">
-              Motif Pairs ({totalMatched.toLocaleString()} matched)
+              {t('tviz.table.title_prefix')} ({totalMatched.toLocaleString()} {t('tviz.table.matched_suffix')})
             </h3>
             <div className="overflow-x-auto relative">
               {tableLoading && (
                 <div className="absolute inset-0 bg-white/60 flex items-center justify-center z-10">
-                  Loading...
+                  {t('tviz.table.loading')}
                 </div>
               )}
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-slate-50">
-                    <th className="text-left py-2 px-3">Cluster</th>
-                    <th className="text-left py-2 px-3">Motif 1</th>
-                    <th className="text-left py-2 px-3">Motif 2</th>
-                    <th className="text-right py-2 px-3">Genes</th>
-                    <th className="text-right py-2 px-3">Total</th>
-                    <th className="text-right py-2 px-3">P-value</th>
-                    <th className="text-right py-2 px-3">Adj. P (BH)</th>
+                    <th className="text-left py-2 px-3">{t('tviz.col.cluster')}</th>
+                    <th className="text-left py-2 px-3">{t('tviz.col.motif1')}</th>
+                    <th className="text-left py-2 px-3">{t('tviz.col.motif2')}</th>
+                    <th className="text-right py-2 px-3">{t('tviz.col.genes')}</th>
+                    <th className="text-right py-2 px-3">{t('tviz.col.total')}</th>
+                    <th className="text-right py-2 px-3">{t('tviz.col.pvalue')}</th>
+                    <th className="text-right py-2 px-3">{t('tviz.col.padj_bh')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -338,9 +329,7 @@ export default function VisualizePage({ params }: PageProps) {
                   ))}
                   {results.length === 0 && !tableLoading && (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-500">
-                        No results match the current filters.
-                      </td>
+                      <td colSpan={7} className="py-8 text-center text-slate-500">{t('viz.data.empty')}</td>
                     </tr>
                   )}
                 </tbody>
@@ -354,17 +343,17 @@ export default function VisualizePage({ params }: PageProps) {
                   disabled={page === 0 || tableLoading}
                   onClick={() => fetchPage(page - 1, selectedCluster, pAdjMax)}
                 >
-                  Previous
+                  {t('viz.page.prev')}
                 </button>
                 <span className="text-sm text-slate-500">
-                  Page {page + 1} of {totalPages.toLocaleString()}
+                  {t('viz.page.page_of_prefix')} {page + 1} {t('viz.page.page_of_mid')} {totalPages.toLocaleString()}
                 </span>
                 <button
                   className="px-3 py-1 text-sm border rounded hover:bg-slate-50 disabled:opacity-40"
                   disabled={page >= totalPages - 1 || tableLoading}
                   onClick={() => fetchPage(page + 1, selectedCluster, pAdjMax)}
                 >
-                  Next
+                  {t('viz.page.next')}
                 </button>
               </div>
             )}
