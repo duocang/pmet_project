@@ -3,8 +3,8 @@
     <marker id="arrowG" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
       <polygon points="0 0, 8 3, 0 6" fill="#2e7d32"/>
     </marker>
-    <marker id="arrowDown" markerWidth="8" markerHeight="6" refX="3" refY="8" orient="auto">
-      <polygon points="0 0, 6 0, 3 8" fill="#555"/>
+    <marker id="arrowDown" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#555"/>
     </marker>
   </defs>
 
@@ -218,7 +218,7 @@
   <rect x="220" y="817" width="200" height="28" rx="0" fill="#fff" stroke="#e0e0e0"/>
   <text x="320" y="836" text-anchor="middle" font-size="10" fill="#333">Parent=transcript:</text>
   <rect x="420" y="817" width="120" height="28" rx="0" fill="#fff" stroke="#e0e0e0"/>
-  <text x="480" y="836" text-anchor="middle" font-size="10" fill="#333">1-2 / 基因</text>
+  <text x="480" y="836" text-anchor="middle" font-size="10" fill="#333">1 / 基因</text>
   <rect x="540" y="817" width="480" height="28" rx="0" fill="#fff" stroke="#e0e0e0"/>
   <text x="780" y="836" text-anchor="middle" font-size="10" fill="#555">uORF、翻译调控元件、IRES</text>
 

@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 770" font-family="Arial, sans-serif">
+  <defs>
+    <marker id="aGrey" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#616161"/>
+    </marker>
+    <marker id="aAmber" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#e65100"/>
+    </marker>
+    <marker id="aGreen" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#2e7d32"/>
+    </marker>
+  </defs>
+
+  <!-- 白色圆角背景 -->
+  <rect x="0" y="0" width="1100" height="770" rx="14" fill="#ffffff"/>
+
+  <!-- 标题 -->
+  <text x="550" y="34" text-anchor="middle" font-size="20" font-weight="bold" fill="#222">PMET — 四种工作流，共用同一索引格式</text>
+  <text x="550" y="52" text-anchor="middle" font-size="11" font-style="italic" fill="#666">每个入口如何汇入同一下游引擎</text>
+
+  <!-- ============ 顶部 4 个入口框 ============ -->
+  <!-- promoter.sh -->
+  <rect x="30" y="70" width="248" height="190" rx="8" fill="#ffffff" stroke="#1565c0" stroke-width="1.5"/>
+  <rect x="30" y="70" width="248" height="32" rx="8" fill="#bbdefb"/>
+  <text x="154" y="91" text-anchor="middle" font-size="13" font-weight="bold" fill="#0d47a1" font-family="Menlo, Consolas, monospace">promoter.sh</text>
+  <text x="50" y="120" font-size="10" font-weight="bold" fill="#0d47a1">输入：</text>
+  <text x="50" y="135" font-size="9" fill="#444">· 基因组 FASTA</text>
+  <text x="50" y="148" font-size="9" fill="#444">· GFF3 注释</text>
+  <text x="50" y="161" font-size="9" fill="#444">· MEME motif 文件</text>
+  <text x="50" y="180" font-size="10" font-weight="bold" fill="#0d47a1">索引阶段：</text>
+  <text x="50" y="195" font-size="9" fill="#444">· 提取启动子（~1 kb）</text>
+  <text x="50" y="208" font-size="9" fill="#444">· FIMO + binomial 阈值</text>
+  <text x="50" y="221" font-size="9" fill="#444">· 每基因 top-k</text>
+  <rect x="50" y="232" width="120" height="18" rx="3" fill="#e3f2fd" stroke="#90caf9"/>
+  <text x="110" y="245" text-anchor="middle" font-size="9" fill="#0d47a1">web: <tspan font-family="Menlo, Consolas, monospace">/promoters</tspan></text>
+
+  <!-- intervals.sh -->
+  <rect x="293" y="70" width="248" height="190" rx="8" fill="#ffffff" stroke="#00838f" stroke-width="1.5"/>
+  <rect x="293" y="70" width="248" height="32" rx="8" fill="#b2ebf2"/>
+  <text x="417" y="91" text-anchor="middle" font-size="13" font-weight="bold" fill="#006064" font-family="Menlo, Consolas, monospace">intervals.sh</text>
+  <text x="313" y="120" font-size="10" font-weight="bold" fill="#006064">输入：</text>
+  <text x="313" y="135" font-size="9" fill="#444">· 区段 FASTA（peaks 等）</text>
+  <text x="313" y="148" font-size="9" fill="#444">· MEME motif 文件</text>
+  <text x="313" y="161" font-size="9" fill="#444">· peak / 区段列表</text>
+  <text x="313" y="180" font-size="10" font-weight="bold" fill="#006064">索引阶段：</text>
+  <text x="313" y="195" font-size="9" fill="#444">· 冒号 sanitize header</text>
+  <text x="313" y="208" font-size="9" fill="#444">· FIMO + binomial 阈值</text>
+  <text x="313" y="221" font-size="9" fill="#444">· 每区段 top-k</text>
+  <rect x="313" y="232" width="120" height="18" rx="3" fill="#e0f7fa" stroke="#80deea"/>
+  <text x="373" y="245" text-anchor="middle" font-size="9" fill="#006064">web: <tspan font-family="Menlo, Consolas, monospace">/intervals</tspan></text>
+
+  <!-- elements.sh -->
+  <rect x="556" y="70" width="248" height="190" rx="8" fill="#ffffff" stroke="#4527a0" stroke-width="1.5"/>
+  <rect x="556" y="70" width="248" height="32" rx="8" fill="#d1c4e9"/>
+  <text x="680" y="91" text-anchor="middle" font-size="13" font-weight="bold" fill="#311b92" font-family="Menlo, Consolas, monospace">elements.sh</text>
+  <text x="576" y="120" font-size="10" font-weight="bold" fill="#311b92">输入：</text>
+  <text x="576" y="135" font-size="9" fill="#444">· 基因组 FASTA + GFF3</text>
+  <text x="576" y="148" font-size="9" fill="#444">· MEME motif 文件</text>
+  <text x="576" y="161" font-size="9" fill="#444">· <tspan font-family="Menlo, Consolas, monospace">-e</tspan> 元素类型，<tspan font-family="Menlo, Consolas, monospace">-s</tspan> 聚合策略</text>
+  <text x="576" y="180" font-size="10" font-weight="bold" fill="#311b92">索引阶段：</text>
+  <text x="576" y="195" font-size="9" fill="#444">· 按元件 fragment 标记</text>
+  <text x="576" y="208" font-size="9" fill="#444">· FIMO 扫描各 fragment</text>
+  <text x="576" y="221" font-size="9" fill="#444">· collapse 回基因层级</text>
+  <rect x="576" y="232" width="100" height="18" rx="3" fill="#ede7f6" stroke="#b39ddb"/>
+  <text x="626" y="245" text-anchor="middle" font-size="9" fill="#311b92">仅 CLI</text>
+
+  <!-- pair_only.sh -->
+  <rect x="819" y="70" width="248" height="190" rx="8" fill="#ffffff" stroke="#37474f" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <rect x="819" y="70" width="248" height="32" rx="8" fill="#cfd8dc"/>
+  <text x="943" y="91" text-anchor="middle" font-size="13" font-weight="bold" fill="#263238" font-family="Menlo, Consolas, monospace">pair_only.sh</text>
+  <text x="839" y="120" font-size="10" font-weight="bold" fill="#263238">输入：</text>
+  <text x="839" y="135" font-size="9" fill="#444">· 已存在的 homotypic 索引</text>
+  <text x="839" y="148" font-size="9" fill="#444">  （<tspan font-style="italic">由左边三种任一生成</tspan>）</text>
+  <text x="839" y="161" font-size="9" fill="#444">· 用户基因列表</text>
+  <text x="839" y="180" font-size="10" font-weight="bold" fill="#d32f2f">索引阶段：</text>
+  <text x="839" y="195" font-size="9" font-style="italic" fill="#d32f2f">跳过 — 直接复用磁盘上</text>
+  <text x="839" y="208" font-size="9" font-style="italic" fill="#d32f2f">已有的索引</text>
+  <rect x="839" y="232" width="160" height="18" rx="3" fill="#eceff1" stroke="#b0bec5"/>
+  <text x="919" y="245" text-anchor="middle" font-size="9" fill="#263238">web: <tspan font-family="Menlo, Consolas, monospace">/promoters_pre</tspan></text>
+
+  <!-- ============ 三条索引入口的合流箭头 ============ -->
+  <line x1="154" y1="265" x2="154" y2="285" stroke="#616161" stroke-width="1.5"/>
+  <line x1="154" y1="285" x2="350" y2="285" stroke="#616161" stroke-width="1.5"/>
+  <line x1="350" y1="285" x2="350" y2="320" stroke="#616161" stroke-width="1.5" marker-end="url(#aGrey)"/>
+
+  <line x1="417" y1="265" x2="417" y2="285" stroke="#616161" stroke-width="1.5"/>
+  <line x1="417" y1="285" x2="450" y2="285" stroke="#616161" stroke-width="1.5"/>
+  <line x1="450" y1="285" x2="450" y2="320" stroke="#616161" stroke-width="1.5" marker-end="url(#aGrey)"/>
+
+  <line x1="680" y1="265" x2="680" y2="285" stroke="#616161" stroke-width="1.5"/>
+  <line x1="680" y1="285" x2="550" y2="285" stroke="#616161" stroke-width="1.5"/>
+  <line x1="550" y1="285" x2="550" y2="320" stroke="#616161" stroke-width="1.5" marker-end="url(#aGrey)"/>
+
+  <!-- pair_only 路径：从 box 直接降到索引右侧 -->
+  <path d="M 943 265 L 943 360 L 870 360" fill="none" stroke="#37474f" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#aGrey)"/>
+  <text x="950" y="318" font-size="9" font-style="italic" fill="#37474f">从磁盘读取</text>
+  <text x="950" y="332" font-size="9" font-style="italic" fill="#37474f">现有索引</text>
+
+  <!-- ============ 中央 homotypic 索引框 ============ -->
+  <rect x="230" y="325" width="640" height="160" rx="10" fill="#fff8e1" stroke="#f57f17" stroke-width="1.5"/>
+  <rect x="230" y="325" width="640" height="32" rx="10" fill="#ffe082"/>
+  <text x="550" y="346" text-anchor="middle" font-size="13" font-weight="bold" fill="#e65100">homotypic index — 共享的磁盘格式</text>
+  <text x="250" y="372" font-size="10" font-style="italic" fill="#bf360c">规范契约：<tspan font-family="Menlo, Consolas, monospace">docs/methods/homotypic-contract.md</tspan></text>
+  <text x="270" y="392" font-size="11" font-family="Menlo, Consolas, monospace" fill="#444">├─ fimohits/&lt;MOTIF&gt;.bin       <tspan fill="#888" font-style="italic" font-family="Arial">— 每 motif 的二进制 hit 列表（PMETBN01）</tspan></text>
+  <text x="270" y="408" font-size="11" font-family="Menlo, Consolas, monospace" fill="#444">├─ binomial_thresholds.txt   <tspan fill="#888" font-style="italic" font-family="Arial">— 每 motif 的 p-value 阈值</tspan></text>
+  <text x="270" y="424" font-size="11" font-family="Menlo, Consolas, monospace" fill="#444">├─ IC.txt                    <tspan fill="#888" font-style="italic" font-family="Arial">— 每 motif 的位置信息量</tspan></text>
+  <text x="270" y="440" font-size="11" font-family="Menlo, Consolas, monospace" fill="#444">├─ universe.txt              <tspan fill="#888" font-style="italic" font-family="Arial">— 基因 / 区段名</tspan></text>
+  <text x="270" y="456" font-size="11" font-family="Menlo, Consolas, monospace" fill="#444">└─ promoter_lengths.txt      <tspan fill="#888" font-style="italic" font-family="Arial">— 每基因 / 区段长度</tspan></text>
+  <text x="550" y="476" text-anchor="middle" font-size="9" font-style="italic" fill="#888">四种工作流共用此格式 — 由 check_homotypic_contract.py 校验</text>
+
+  <!-- 箭头下移 + "+ 基因列表" 注解 -->
+  <line x1="550" y1="490" x2="550" y2="525" stroke="#e65100" stroke-width="2" marker-end="url(#aAmber)"/>
+  <rect x="585" y="497" width="170" height="20" rx="4" fill="#ffffff" stroke="#bbb"/>
+  <text x="670" y="511" text-anchor="middle" font-size="10" fill="#444">+ 用户基因列表（感兴趣的 cluster）</text>
+
+  <!-- ============ 异型 pair test（共用引擎） ============ -->
+  <rect x="230" y="530" width="640" height="100" rx="10" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/>
+  <rect x="230" y="530" width="640" height="32" rx="10" fill="#a5d6a7"/>
+  <text x="550" y="551" text-anchor="middle" font-size="13" font-weight="bold" fill="#1b5e20">异型 pair test（共用引擎）</text>
+  <text x="550" y="580" text-anchor="middle" font-size="11" fill="#1b5e20">四种工作流都调用 <tspan font-family="Menlo, Consolas, monospace" font-weight="bold">build/pair_parallel</tspan></text>
+  <text x="550" y="600" text-anchor="middle" font-size="11" fill="#1b5e20">每 cluster <tspan font-weight="bold">超几何检验</tspan>，由 binomial 阈值预先筛选</text>
+  <text x="550" y="617" text-anchor="middle" font-size="10" font-style="italic" fill="#2e7d32">+ Benjamini–Hochberg / Bonferroni 多重检验校正</text>
+
+  <!-- 输出箭头 -->
+  <line x1="550" y1="635" x2="550" y2="665" stroke="#2e7d32" stroke-width="2" marker-end="url(#aGreen)"/>
+
+  <!-- ============ 输出 ============ -->
+  <rect x="230" y="670" width="640" height="42" rx="8" fill="#ffffff" stroke="#37474f" stroke-width="1.5"/>
+  <text x="550" y="689" text-anchor="middle" font-size="13" font-weight="bold" fill="#263238" font-family="Menlo, Consolas, monospace">motif_output.txt</text>
+  <text x="550" y="705" text-anchor="middle" font-size="10" fill="#555">共 11 列，按 <tspan font-family="Menlo, Consolas, monospace">adj_p_BH</tspan> 排序</text>
+
+  <!-- heatmap 作为 output 框下方的独立脚注 -->
+  <text x="550" y="729" text-anchor="middle" font-size="9" font-style="italic" fill="#888">+ 可选 3 张 heatmap PNG — 需要 Rscript 和 <tspan font-family="Menlo, Consolas, monospace">pipeline/r/install_packages.R</tspan> 列出的 R 包</text>
+
+  <!-- 底部 info-box -->
+  <rect x="20" y="740" width="1060" height="22" rx="6" fill="#e3f2fd" stroke="#90caf9" stroke-width="1"/>
+  <text x="40" y="755" font-size="10" fill="#0d47a1">
+    <tspan font-weight="bold">Web 后端 SCRIPT_MAP</tspan>（<tspan font-family="Menlo, Consolas, monospace">apps/pmet_backend/services/executor.py</tspan>）：根据用户选择的模式把任务派发到对应 .sh。
+  </text>
+</svg>
