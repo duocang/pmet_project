@@ -66,7 +66,7 @@ mkdir -p "$shared_dir" "$heterotypic_output" "$plot_output" "$logDir"
 BIN_DIR=build
 BIN_FIMO="$BIN_DIR/fimo"
 BIN_PMET="$BIN_DIR/pair_parallel"
-PY=scripts/python
+PY=pipeline/python
 
 # ==================== Preflight ====================
 
@@ -90,7 +90,7 @@ if [[ "$gff3_chr" != "$fasta_chr" ]]; then
     exit 1
 fi
 
-chmod a+x "$BIN_FIMO" "$BIN_PMET" scripts/gff3sort/gff3sort.pl
+chmod a+x "$BIN_FIMO" "$BIN_PMET" pipeline/third_party/gff3sort/gff3sort.pl
 
 # ==================== Helpers ====================
 
@@ -115,7 +115,7 @@ prepare_shared() {
     local t=$SECONDS
 
     # 1. Sort GFF3 so that transcripts follow their parent genes
-    scripts/gff3sort/gff3sort.pl "$anno" > "$shared_dir/sorted.gff3"
+    pipeline/third_party/gff3sort/gff3sort.pl "$anno" > "$shared_dir/sorted.gff3"
 
     # 2–4. Build gene BED via gff3_to_gene_bed.py (drops the per-step
     #      genelines.gff3 intermediate). The feature regex is selected by

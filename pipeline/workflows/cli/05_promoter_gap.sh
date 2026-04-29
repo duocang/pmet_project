@@ -73,7 +73,7 @@ plot_output=$res_dir/plot
 BIN_DIR=build
 BIN_INDEX="$BIN_DIR/index_fimo_fused"
 BIN_PMET="$BIN_DIR/pair_parallel"
-PY=scripts/python
+PY=pipeline/python
 
 # Derived paths (inside homotypic_output)
 universefile="$homotypic_output/universe.txt"
