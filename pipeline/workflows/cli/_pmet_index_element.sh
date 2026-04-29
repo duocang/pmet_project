@@ -1,31 +1,6 @@
 #!/bin/bash
 set -e
 
-# ============================================================================
-# ARCHITECTURAL NOTE — KNOWN BROKEN AS OF MONOREPO MOVE
-# ----------------------------------------------------------------------------
-# This script (and its callers 06_elements_longest.sh / 07_elements_merged.sh)
-# uses an OLDER two-step flow:
-#     fimo (per-motif batch, with PMET-patched --topn/--topk flags)
-#       -> separate pmet binary that consumed text fimohits
-# That patched fimo binary was shipped only by the upstream PMET_project
-# build/ tree and is not in our build/. Upstream MEME's stock fimo does
-# NOT support --topn/--topk, so step 8 below aborts with:
-#     "FATAL: Error processing command line options: --topn is not a valid option"
-#
-# The newer one-step `index_fimo_fused` binary (used by intervals.sh and
-# promoter.sh) accepts those flags and does both stages in one pass — but
-# only writes binary `*.bin` fimohits, while step 9 here needs `*.txt` to
-# do its per-interval -> gene-level collapse via sed/awk on rows.
-#
-# Resolving this requires either:
-#   (a) Adding a text-output mode to index_fimo_fused (upstream change).
-#   (b) Rewriting step 9 to decode the PMETBN01 binary format.
-#   (c) Bundling the PMET-patched fimo binary in build/.
-# All are non-trivial and out of scope for the rename / dedup work that
-# brought this script to its current location.
-# ============================================================================
-
 # Build a PMET homotypic index on a chosen genomic element
 # (mRNA / exon / CDS / three_prime_UTR / five_prime_UTR) using one of two
 # isoform-aggregation strategies:
@@ -353,7 +328,8 @@ fasta-get-markov "$indexingOutputDir/promoter.fa" > "$indexingOutputDir/promoter
 
 # -------------------------------------------------------------------------------------------
 # 7. IC per motif (reads combined MEME directly; rows in deterministic
-#    MEME-file order). FIMO still needs its own batched split below.
+#    MEME-file order, motif IDs upper-cased so they line up with what
+#    index_fimo_fused writes into binomial_thresholds.txt at step 8).
 print_fluorescent_yellow "     7. Computing information content (IC.txt)"
 python3 "$pmetroot/python/calculateICfrommeme_IC_to_csv.py" \
     "$memefile" \
@@ -361,70 +337,45 @@ python3 "$pmetroot/python/calculateICfrommeme_IC_to_csv.py" \
 
 
 # -------------------------------------------------------------------------------------------
-# 8. Re-split MEME into N round-robin batches for parallel FIMO (N = threads).
-print_fluorescent_yellow "     8. Splitting MEME into ${threads} batches for parallel FIMO"
-python3 "$pmetroot/python/parse_memefile_batches.py" \
-    "$memefile" "$indexingOutputDir/memefiles/" "$threads"
-
-
-# -------------------------------- Run FIMO -------------------------------------------------
-# WARNING — KNOWN BROKEN, see "ARCHITECTURAL NOTE" at top of file.
-#   --topn / --topk are PMET-project patches not present in upstream
-#   MEME's fimo. This step will abort with
-#     "FATAL: Error processing command line options: --topn is not a valid option"
-#   when the PATH-resolved fimo is the upstream MEME one.
-#   Switching to index_fimo_fused was attempted (it accepts --topn/--topk
-#   and writes binomial_thresholds.txt directly) but it only emits
-#   binary `*.bin` fimohits — step 9's per-interval → gene-level collapse
-#   needs `*.txt` to run sed/awk over rows. Resolving this requires
-#   either a binary-aware step-9 rewrite or a text-output mode added
-#   to index_fimo_fused; both are out of scope for the current rename
-#   /merge work. Until then 06_elements_longest.sh / 07_elements_merged.sh
-#   are non-functional.
+# 8. Run FIMO + PMET indexing as a single fused step.
+#    Replaces the previous two-step flow (split MEME into batches ->
+#    GNU parallel + per-batch fimo --topn/--topk -> separate pmet indexer)
+#    that depended on PMET-patched fimo flags absent from upstream MEME.
+#    index_fimo_fused has internal OpenMP motif batching + writes
+#    binomial_thresholds.txt at $indexingOutputDir and per-motif binary
+#    fimohits/*.bin (PMETBN01 format). Same call shape as
+#    pipeline/workflows/{intervals,promoter}.sh.
+nummotifs=$(grep -c '^MOTIF' "$memefile")
+print_fluorescent_yellow "     8. Running FIMO + PMETindex (${nummotifs} motifs, ${threads} thread(s))"
 mkdir -p "$indexingOutputDir/fimohits"
 
-print_green "Running FIMO..."
-runFimoIndexing () {
-    local memebatch=$1 dir=$2 thresh=$3 build=$4 k=$5 n=$6
-    # PMET-patched fimo lived at $build/fimo in the upstream PMET_project
-    # build/ tree. Our build/ doesn't ship it; resolve via PATH so the
-    # error message at least surfaces at the right line if a user has
-    # the patched fimo installed elsewhere.
-    fimo \
-        --no-qvalue \
-        --text \
-        --thresh "$thresh" \
-        --verbosity 1 \
-        --bgfile "$dir/promoter.bg" \
-        --topn   "$n" \
-        --topk   "$k" \
-        --oc     "$dir/fimohits" \
-        "$memebatch" \
-        "$dir/promoter.fa" \
-        "$dir/promoter_lengths.txt"
-}
-export -f runFimoIndexing
+BIN_INDEX="$buildDir/index_fimo_fused"
+[ -x "$BIN_INDEX" ] || { print_red "Binary not found or not executable: $BIN_INDEX"; exit 1; }
 
-nummotifs=$(grep -c '^MOTIF' "$memefile")
-print_orange "    $nummotifs motifs found"
-
-find "$indexingOutputDir/memefiles" -name '*.txt' \
-    | parallel --progress --jobs="$threads" \
-        "runFimoIndexing {} $indexingOutputDir $fimothresh $buildDir $maxk $topn"
-
-# Parallel FIMO batches race to write this file; sort by motif so the bytes
-# are stable across runs. Downstream binaries do not depend on row order.
-sort -o "$indexingOutputDir/fimohits/binomial_thresholds.txt" \
-        "$indexingOutputDir/fimohits/binomial_thresholds.txt"
-mv "$indexingOutputDir/fimohits/binomial_thresholds.txt" "$indexingOutputDir/"
+OMP_NUM_THREADS="$threads" \
+"$BIN_INDEX"                                  \
+    --no-qvalue                               \
+    --text                                    \
+    --thresh "$fimothresh"                    \
+    --verbosity 1                             \
+    --bgfile "$indexingOutputDir/promoter.bg" \
+    --topn "$topn"                            \
+    --topk "$maxk"                            \
+    --oc "$indexingOutputDir"                 \
+    "$memefile"                               \
+    "$indexingOutputDir/promoter.fa"          \
+    "$indexingOutputDir/promoter_lengths.txt"
 
 
 # -------------------------------------------------------------------------------------------
 # 9. Collapse per-interval results back to gene level:
-#    - promoter_lengths: sum interval lengths per gene.
-#    - fimohits: strip __N from col 2, per gene keep top $maxk hits by
-#      ascending p-value (col 7) that are below the motif's binomial
-#      threshold. sort -g handles scientific-notation p-values (e.g. 1.2e-07).
+#    - promoter_lengths: sum interval lengths per gene (text, awk).
+#    - fimohits/*.bin: strip __GENE__N -> GENE in the sequence name pool,
+#      group by gene, keep top $maxk hits per gene by ascending p-value,
+#      filter against the motif's binomial threshold. Done in Python because
+#      index_fimo_fused emits PMETBN01 binary that needs proper parsing
+#      (length-prefixed records, name-pool offsets) — sed/awk on bytes
+#      would corrupt the file.
 #    Idempotent when each gene has a single interval.
 print_fluorescent_yellow "     9. Collapsing per-interval results back to gene level"
 awk -F'\t' '{
@@ -436,23 +387,8 @@ END { for (g in sum) print g "\t" sum[g] }' \
     > "$indexingOutputDir/promoter_lengths.tmp"
 mv "$indexingOutputDir/promoter_lengths.tmp" "$indexingOutputDir/promoter_lengths.txt"
 
-mkdir -p "$indexingOutputDir/fimohits_merged"
-while IFS=$'\t' read -r motif threshold _; do
-    src="$indexingOutputDir/fimohits/${motif}.txt"
-    dst="$indexingOutputDir/fimohits_merged/${motif}.txt"
-    [ -f "$src" ] || continue
-    awk -F'\t' -v OFS='\t' '
-        { sub(/^__/, "", $2); sub(/__[0-9]+$/, "", $2); print }
-    ' "$src" \
-    | sort -t $'\t' -k2,2 -k7,7g \
-    | awk -F'\t' -v OFS='\t' -v k="$maxk" -v thr="$threshold" '
-        $2 != prev { prev = $2; n = 0 }
-        { n++; if (n <= k && ($7+0) < (thr+0)) print }
-    ' > "$dst"
-done < "$indexingOutputDir/binomial_thresholds.txt"
-
-rm -rf "$indexingOutputDir/fimohits"
-mv "$indexingOutputDir/fimohits_merged" "$indexingOutputDir/fimohits"
+python3 "$pmetroot/python/collapse_element_fimohits.py" \
+    "$indexingOutputDir" "$maxk"
 
 
 # -------------------------------------------------------------------------------------------
@@ -466,16 +402,18 @@ if [[ $delete == [Yy]* ]]; then
            "$indexingOutputDir/genome_stripped.fa" \
            "$indexingOutputDir/genome_stripped.fa.fai" \
            "$indexingOutputDir/promoter.bg" \
-           "$indexingOutputDir/promoter.fa" \
-           "$indexingOutputDir/memefiles"
+           "$indexingOutputDir/promoter.fa"
 fi
 
 
 # -------------------------------------------------------------------------------------------
-# Sanity check: one fimohits file per motif.
-file_count=$(find "$indexingOutputDir/fimohits" -maxdepth 1 -type f -name '*.txt' | wc -l)
+# Sanity check: one fimohits file per motif (binary now after step 8 ->
+# index_fimo_fused). A motif may be absent from fimohits/ if it produced
+# zero hits at the chosen FIMO threshold; check_homotypic_contract.py
+# treats that as a soft failure with a clear message rather than a count
+# mismatch here.
+file_count=$(find "$indexingOutputDir/fimohits" -maxdepth 1 -type f -name '*.bin' | wc -l)
 if [ "$file_count" -eq "$nummotifs" ]; then
-    # Schema validation against docs/contracts/homotypic.md.
     python3 "$pmetroot/python/check_homotypic_contract.py" "$indexingOutputDir" \
         || { print_red "Homotypic contract violated; see stderr above"; exit 1; }
     elapsed=$((SECONDS - start))
@@ -484,6 +422,6 @@ if [ "$file_count" -eq "$nummotifs" ]; then
     print_orange "      Time taken: $hms"
     print_green "DONE: homotypic search"
 else
-    print_red "Error: $file_count fimohits files, expected $nummotifs."
+    print_red "Error: $file_count fimohits files, expected $nummotifs (some motifs may have zero hits at threshold $fimothresh)."
     exit 1
 fi
