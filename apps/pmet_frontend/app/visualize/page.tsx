@@ -985,7 +985,7 @@ export default function VisualizePage() {
   // Upload view
   if (allResults.length === 0) {
     return (
-      <div className="max-w-2xl mx-auto py-8">
+      <div className="max-w-5xl mx-auto py-8">
         <h1 className="text-2xl font-bold mb-2">{t('viz.title')}</h1>
         <p className="text-slate-600 mb-8">{t('viz.intro')}</p>
 
@@ -1156,6 +1156,7 @@ export default function VisualizePage() {
           ))}
         </div>
 
+        <div key={activeTab} className="tab-panel">
         {/* Heat map tab */}
         {activeTab === 'heatmap' &&
           (() => {
@@ -1787,6 +1788,7 @@ export default function VisualizePage() {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* Cell detail modal */}
