@@ -154,6 +154,10 @@ export const fileApi = {
     });
     return response.data;
   },
+
+  deleteUpload: async (path: string): Promise<void> => {
+    await api.delete('/api/files/upload', { params: { path } });
+  },
 };
 
 export default api;

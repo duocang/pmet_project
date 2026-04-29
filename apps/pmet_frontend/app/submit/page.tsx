@@ -160,6 +160,22 @@ function SubmitPageContent() {
     }
   };
 
+  const handleFileClear = async (fileType: FileFieldType) => {
+    const path = uploadedPaths[fileType];
+    if (path) {
+      // Best-effort: even if server delete fails, clear the local state so
+      // the user can re-pick. The toast inside FileUpload surfaces any
+      // server-side failure.
+      try { await fileApi.deleteUpload(path); }
+      finally {
+        updatePaths({ [fileType]: '' } as Partial<ModePaths>);
+        updateFiles({ [fileType]: null } as Partial<ModeFiles>);
+      }
+    } else {
+      updateFiles({ [fileType]: null } as Partial<ModeFiles>);
+    }
+  };
+
   const handleParamChange = (newParams: Record<string, any>) => {
     setParams((prev) => ({ ...prev, ...newParams }));
   };
@@ -543,6 +559,7 @@ function SubmitPageContent() {
               label={mode === 'intervals' ? t('submit.upload.label.intervals_fa') : t('submit.upload.label.genome')}
               accept=".fasta,.fa,.fasta.gz,.fa.gz"
               onUpload={(file, p) => handleFileUpload(file, 'fasta', p)}
+              onClear={() => handleFileClear('fasta')}
               currentFile={files.fasta?.name}
               required
               demoUrl={`/api/demo/${mode}/fasta`}
@@ -555,6 +572,7 @@ function SubmitPageContent() {
               label={t('submit.upload.label.annotation')}
               accept=".gff3,.gff,.gff3.gz,.gff.gz"
               onUpload={(file, p) => handleFileUpload(file, 'gff3', p)}
+              onClear={() => handleFileClear('gff3')}
               currentFile={files.gff3?.name}
               required
               demoUrl="/api/demo/promoters/gff3"
@@ -567,6 +585,7 @@ function SubmitPageContent() {
               label={t('submit.upload.label.motif')}
               accept=".meme"
               onUpload={(file, p) => handleFileUpload(file, 'meme', p)}
+              onClear={() => handleFileClear('meme')}
               currentFile={files.meme?.name}
               required
               demoUrl={`/api/demo/${mode}/meme`}
@@ -579,6 +598,7 @@ function SubmitPageContent() {
               label={mode === 'intervals' ? t('submit.upload.label.peaks') : t('submit.upload.label.gene_list')}
               accept=".txt,.tsv"
               onUpload={(file, p) => handleFileUpload(file, 'genes', p)}
+              onClear={() => handleFileClear('genes')}
               currentFile={files.genes?.name}
               helpText={t('submit.upload.help.gene_list')}
               required

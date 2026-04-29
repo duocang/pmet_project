@@ -10,10 +10,12 @@ interface FileUploadProps {
   accept?: string;
   /**
    * Caller does the actual upload. The optional onProgress callback is
-   * forwarded all the way down to axios's onUploadProgress so the bar
-   * reflects real bytes-on-wire instead of just an indeterminate spinner.
+   * forwarded all the way down to axios's onUploadProgress so the box
+   * fill reflects real bytes-on-wire instead of a fake animation.
    */
   onUpload: (file: File, onProgress?: (pct: number) => void) => Promise<void>;
+  /** Caller deletes the previously-uploaded file (server + local state). */
+  onClear?: () => Promise<void> | void;
   currentFile?: string;
   helpText?: string;
   required?: boolean;
@@ -23,10 +25,53 @@ interface FileUploadProps {
   demoFilename?: string;
 }
 
+function UploadIcon() {
+  return (
+    <svg
+      width="40"
+      height="40"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="text-slate-400"
+      aria-hidden="true"
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
+    </svg>
+  );
+}
+
+function FileCheckIcon() {
+  return (
+    <svg
+      width="40"
+      height="40"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="text-emerald-500"
+      aria-hidden="true"
+    >
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <polyline points="9 14 11 16 15 12" />
+    </svg>
+  );
+}
+
 export default function FileUpload({
   label,
   accept,
   onUpload,
+  onClear,
   currentFile,
   helpText,
   required = false,
@@ -37,6 +82,8 @@ export default function FileUpload({
   const [loadingDemo, setLoadingDemo] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [uploadingFilename, setUploadingFilename] = useState<string>('');
+  const [removing, setRemoving] = useState(false);
 
   const acceptedExtensions = accept
     ? accept
@@ -49,6 +96,7 @@ export default function FileUpload({
     async (file: File) => {
       setUploading(true);
       setProgress(0);
+      setUploadingFilename(file.name);
       try {
         await onUpload(file, setProgress);
         toast.success(`${file.name} — ${t('fileupload.toast.uploaded')}`);
@@ -58,6 +106,7 @@ export default function FileUpload({
       } finally {
         setUploading(false);
         setProgress(0);
+        setUploadingFilename('');
       }
     },
     [onUpload, t]
@@ -73,16 +122,10 @@ export default function FileUpload({
 
   const validateFileType = useCallback(
     (file: File): FileError | null => {
-      if (acceptedExtensions.length === 0) {
-        return null;
-      }
-
+      if (acceptedExtensions.length === 0) return null;
       const fileName = file.name.toLowerCase();
       const isAccepted = acceptedExtensions.some((ext) => fileName.endsWith(ext));
-      if (isAccepted) {
-        return null;
-      }
-
+      if (isAccepted) return null;
       return {
         code: 'file-invalid-type',
         message: `File type must be ${acceptedExtensions.join(', ')}`,
@@ -103,7 +146,7 @@ export default function FileUpload({
     onDrop,
     onDropRejected,
     multiple: false,
-    disabled: uploading,
+    disabled: uploading || !!currentFile,
     validator: acceptedExtensions.length > 0 ? validateFileType : undefined,
   });
 
@@ -126,6 +169,24 @@ export default function FileUpload({
     }
   }, [demoUrl, demoFilename, runUpload, t]);
 
+  const handleRemove = useCallback(
+    async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!onClear) return;
+      setRemoving(true);
+      try {
+        await onClear();
+        toast.success(t('fileupload.removed'));
+      } catch (err) {
+        toast.error(t('fileupload.remove_failed'));
+        console.error(err);
+      } finally {
+        setRemoving(false);
+      }
+    },
+    [onClear, t]
+  );
+
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between mb-1">
@@ -133,11 +194,11 @@ export default function FileUpload({
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
-        {demoUrl && (
+        {demoUrl && !currentFile && !uploading && (
           <button
             type="button"
             onClick={useExample}
-            disabled={loadingDemo || uploading}
+            disabled={loadingDemo}
             className="text-xs font-medium text-primary-700 hover:text-primary-800 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -150,33 +211,70 @@ export default function FileUpload({
       </div>
       <div
         {...getRootProps()}
-        className={`file-upload ${isDragActive ? 'border-primary-500 bg-primary-50' : ''} ${uploading ? 'cursor-default' : ''}`}
+        className={`file-upload ${isDragActive ? 'border-primary-500 bg-primary-50' : ''} ${uploading || currentFile ? 'cursor-default' : ''}`}
       >
         <input {...getInputProps({ accept })} />
-        {uploading ? (
-          <div className="space-y-2 px-2">
-            <p className="text-sm font-medium text-primary-700">
-              {t('fileupload.uploading')} <span className="font-mono">{progress}%</span>
-            </p>
-            <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
-              <div
-                className="progress-bar-fill h-full bg-primary-600 transition-[width] duration-150 ease-out"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-        ) : currentFile ? (
-          <div className="text-green-600 font-medium">
-            <svg className="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            {currentFile}
-          </div>
-        ) : isDragActive ? (
-          <p className="text-primary-600">{t('fileupload.drop_active')}</p>
-        ) : (
-          <p className="text-slate-500">{t('fileupload.drop_idle')}</p>
+
+        {uploading && (
+          <div
+            className="file-upload-charge"
+            style={{ width: `${progress}%` }}
+            aria-hidden="true"
+          />
         )}
+
+        <div className="relative space-y-3">
+          {uploading ? (
+            <>
+              <div className="flex justify-center"><UploadIcon /></div>
+              <p className="text-sm font-medium text-emerald-700">
+                {t('fileupload.uploading')} <span className="font-mono break-all">{uploadingFilename}</span>
+              </p>
+              {acceptedExtensions.length > 0 && (
+                <p className="text-xs invisible" aria-hidden="true">
+                  {t('fileupload.drop_idle_hint')} <span className="font-mono">{acceptedExtensions.join(' · ')}</span>
+                </p>
+              )}
+            </>
+          ) : currentFile ? (
+            <>
+              <div className="flex justify-center"><FileCheckIcon /></div>
+              <p className="font-medium text-emerald-700 break-all">{currentFile}</p>
+              {onClear && (
+                <button
+                  type="button"
+                  onClick={handleRemove}
+                  disabled={removing}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-700 disabled:opacity-50"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                    <path d="M10 11v6" />
+                    <path d="M14 11v6" />
+                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                  </svg>
+                  {removing ? t('fileupload.loading') : t('fileupload.remove')}
+                </button>
+              )}
+            </>
+          ) : isDragActive ? (
+            <>
+              <div className="flex justify-center"><UploadIcon /></div>
+              <p className="text-primary-600">{t('fileupload.drop_active')}</p>
+            </>
+          ) : (
+            <>
+              <div className="flex justify-center"><UploadIcon /></div>
+              <p className="text-slate-600">{t('fileupload.drop_idle')}</p>
+              {acceptedExtensions.length > 0 && (
+                <p className="text-xs text-slate-400">
+                  {t('fileupload.drop_idle_hint')} <span className="font-mono">{acceptedExtensions.join(' · ')}</span>
+                </p>
+              )}
+            </>
+          )}
+        </div>
       </div>
       {helpText && (
         <p className="mt-1 text-sm text-slate-500">{helpText}</p>

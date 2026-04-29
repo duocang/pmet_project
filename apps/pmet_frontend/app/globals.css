@@ -54,7 +54,20 @@ body {
 }
 
 .file-upload {
-  @apply border border-dashed border-slate-300 rounded-lg p-8 text-center cursor-pointer bg-slate-50/60 hover:border-primary-500 hover:bg-primary-50/50 transition-colors;
+  @apply relative overflow-hidden border-2 border-dashed border-slate-300 rounded-lg p-10 text-center cursor-pointer bg-slate-50/60 hover:border-primary-500 hover:bg-primary-50/50 transition-colors;
+}
+/* Translucent green wash that fills left-to-right while uploading,
+   like a phone charging up. Soft glow on the right "leading edge"
+   is from inset shadow. */
+.file-upload-charge {
+  @apply pointer-events-none absolute inset-y-0 left-0 transition-[width] duration-200 ease-out;
+  background: linear-gradient(
+    to right,
+    rgba(16, 185, 129, 0.18) 0%,
+    rgba(16, 185, 129, 0.32) 70%,
+    rgba(16, 185, 129, 0.55) 100%
+  );
+  box-shadow: inset -1px 0 8px rgba(16, 185, 129, 0.45);
 }
 
 .page-shell {
@@ -145,24 +158,3 @@ body {
   animation: zoom-content-in 220ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Charging-style striped progress bar.
-   The fill uses a 45deg stripe gradient that scrolls left to right —
-   gives the bar a "current is flowing" feel even at low percentages. */
-@keyframes progress-stripes {
-  from { background-position: 0 0; }
-  to   { background-position: 1rem 0; }
-}
-.progress-bar-fill {
-  background-image: linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.22) 25%,
-    transparent 25%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.22) 50%,
-    rgba(255, 255, 255, 0.22) 75%,
-    transparent 75%,
-    transparent
-  );
-  background-size: 1rem 1rem;
-  animation: progress-stripes 0.9s linear infinite;
-}

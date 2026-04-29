@@ -143,3 +143,23 @@ async def upload_multiple_files(
         result = _save_uploaded_file(file, task_id, "auto")
         results.append(result)
     return {"files": results}
+
+
+@router.delete("/upload")
+async def delete_upload(path: str):
+    """Delete a file the user previously uploaded.
+
+    `path` is the project-relative path that POST /upload returned. We
+    resolve it to an absolute path and refuse anything that escapes
+    RESULT_DIR (defends against ../.. traversal).
+    """
+    result_root = config.RESULT_DIR.resolve()
+    target = (config.PROJECT_ROOT / path).resolve()
+    try:
+        target.relative_to(result_root)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Path is outside the upload area") from exc
+    if not target.exists() or not target.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+    target.unlink()
+    return {"deleted": path}
