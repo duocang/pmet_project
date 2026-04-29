@@ -1,6 +1,6 @@
 # pair_only — re-pair an existing homotypic index
 
-_Audit refreshed 2026-04-29 11:32:44 UTC on this machine — workflow `pair_only`, exit 0, 14.8s_
+_Audit refreshed 2026-04-29 13:12:55 UTC on this machine — workflow `pair_only`, exit 0, 15.3s_
 
 **Source:** [`pipeline/workflows/pair_only.sh`](../../pipeline/workflows/pair_only.sh)
 &nbsp;&nbsp;**Used by:** CLI re-runs · web `promoters_pre` mode (`apps/pmet_backend/services/executor.py` SCRIPT_MAP)
@@ -35,8 +35,10 @@ records every position in every promoter where `m` was found, along with:
 - `IC.txt` — per-motif positional information content, used by
   pair_parallel as a sanity floor (skip motifs less informative than
   `-i <ic_threshold>`).
-- `fimohits/<MOTIF>.bin` — the per-motif hit list in PMETBN01 binary
-  format (sequence name + start/stop/strand + score + p-value).
+- `fimohits/<MOTIF>.{txt,bin}` — the per-motif hit list. Modern indexes
+  produced by `index_fimo_fused` are PMETBN01 binary (`.bin`); older
+  text-format indexes (`.txt`) are still accepted by `pair_parallel`,
+  and the bundled `data/pairing/demo` fixture uses text.
 - `promoter_lengths.txt`, `universe.txt` — universe metadata.
 
 The schema is defined in [`docs/methods/homotypic-contract.md`](../methods/homotypic-contract.md).
@@ -92,7 +94,7 @@ enrichment, lower p-values.
 
 ## Verification
 
-✅ **PASS** — all 5 check(s) passed
+⚠️ **PASS WITH WARNINGS** — 2 warning(s), 6 pass(es)
 
 | # | Check | Expected | Observed | Verdict |
 |---|---|---|---|---|
@@ -101,6 +103,9 @@ enrichment, lower p-values.
 | 3 | motif_output deterministic vs anchor | `0af5b936606fd30f3e4989c3658170e93e208d1277fa97882a2e83c130a83d8f` | `0af5b936606fd30f3e4989c3658170e93e208d1277fa97882a2e83c130a83d8f` | ✅ PASS — captured against data/pairing/demo on this host; will differ if the fixture changes |
 | 4 | genes_used_PMET.txt non-empty | `>= 1` | `1347` | ✅ PASS — genes from -g that survived the universe filter |
 | 5 | pmet.log non-empty | `>= 1` | `32` | ✅ PASS |
+| 6 | input index contract: binomial == IC motifs | `set equal` | `|both|=113` | ✅ PASS |
+| 7 | input index contract: binomial == fimohits motifs | `set equal` | `only_binomial=['AHL25', 'AHL25_2', 'AHL25_3ARY']..., only_fimohits=[]` | ⚠️ WARN — motif-set mismatch — see note above |
+| 8 | input index contract: IC == fimohits motifs | `set equal` | `only_IC=['AHL25', 'AHL25_2', 'AHL25_3ARY']..., only_fimohits=[]` | ⚠️ WARN — motif-set mismatch — see note above |
 
 ### Reproducing this audit
 

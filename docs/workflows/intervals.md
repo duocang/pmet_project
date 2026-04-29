@@ -1,6 +1,6 @@
 # intervals — full PMET on user-supplied genomic intervals
 
-_Audit refreshed 2026-04-29 11:35:41 UTC on this machine — workflow `intervals`, exit 0, 15.8s_
+_Audit refreshed 2026-04-29 13:13:10 UTC on this machine — workflow `intervals`, exit 0, 15.2s_
 
 **Source:** [`pipeline/workflows/intervals.sh`](../../pipeline/workflows/intervals.sh)
 &nbsp;&nbsp;**Used by:** CLI research runs · web `intervals` mode
@@ -29,9 +29,22 @@ within that universe.
 A subtlety: FIMO's input parser and PMET's binary fimohits format
 don't tolerate `:` characters in sequence names (FIMO mis-parses the
 header, the binary records are length-prefixed so a sed restore would
-shift bytes). The script substitutes `:` → `__COLON__` on the way in
-and restores `:` only on the human-facing text outputs at the end —
-**binary fimohits stay sanitized internally**.
+shift bytes). Two sed passes handle this:
+
+- On the input FASTA: `sed 's/^\(>.*\):/\1__COLON__/g'` rewrites the
+  **last `:` on each header line** (the `\(.*\)` is greedy + the `^>`
+  anchor restricts the match to header lines). Body sequence lines
+  are untouched. For the typical `>chr:start-end(strand)` IDs there's
+  only one `:` per header, so "last" coincides with "the only one";
+  multi-colon names get only their final `:` rewritten — anything
+  earlier is preserved.
+- On the user's gene list: `sed 's/:/__COLON__/g'` rewrites **every
+  `:`**, since there are no header markers to anchor against and the
+  list is line-per-name.
+
+After indexing + pairing, only the user-facing text outputs
+(`motif_output.txt`, `genes_used_PMET.txt`, `genes_not_found.txt`)
+are restored to `:` — **binary fimohits stay sanitised internally**.
 
 ## What the script does, step by step
 
@@ -83,20 +96,23 @@ Total enriched pair rows: **46**.
 
 ## Verification
 
-⚠️ **PASS WITH WARNINGS** — 1 warning(s), 9 pass(es)
+⚠️ **PASS WITH WARNINGS** — 1 warning(s), 12 pass(es)
 
 | # | Check | Expected | Observed | Verdict |
 |---|---|---|---|---|
 | 1 | script exit code | `0` | `0` | ✅ PASS |
-| 2 | fimohits/*.bin per motif | `10` | `10` | ✅ PASS — one PMETBN01 file per motif in motif.meme |
+| 2 | fimohits/*.bin per motif | `10` | `10` | ✅ PASS |
 | 3 | binomial_thresholds rows == motifs | `10` | `10` | ✅ PASS |
 | 4 | IC.txt rows == motifs | `10` | `10` | ✅ PASS |
 | 5 | universe.txt non-empty (interval names) | `>= 1` | `26552` | ✅ PASS |
 | 6 | promoter_lengths.txt rows == universe size | `26552` | `26552` | ✅ PASS — every interval needs a length row |
 | 7 | motif_output.txt non-empty (heterotypic pairs) | `>= 1` | `46` | ✅ PASS |
 | 8 | motif_output.txt deterministic vs anchor | `4858412a09198363305a419af01d47a35ff7cfd63a2169dd01aa545f8ff800c6` | `4858412a09198363305a419af01d47a35ff7cfd63a2169dd01aa545f8ff800c6` | ✅ PASS — captured against demo_intervals on this host; differs if fixture or pair_parallel sort changes |
-| 9 | Rscript invoked (3 histogram subdirs present) | `3` | `3` | ✅ PASS |
-| 10 | 3 headline heatmap PNGs rendered | `3` | `0` | ⚠️ WARN — R ran but draw_heatmap.R's p-adj filter left nothing to plot (expected on small demo data) |
+| 9 | indexing contract: binomial == IC motifs | `set equal` | `|both|=10` | ✅ PASS |
+| 10 | indexing contract: binomial == fimohits motifs | `set equal` | `|both|=10` | ✅ PASS |
+| 11 | indexing contract: IC == fimohits motifs | `set equal` | `|both|=10` | ✅ PASS |
+| 12 | Rscript invoked (3 histogram subdirs present) | `3` | `3` | ✅ PASS |
+| 13 | 3 headline heatmap PNGs rendered | `3` | `0` | ⚠️ WARN — R ran but draw_heatmap.R's p-adj filter left nothing to plot (expected on small demo data) |
 
 ### Reproducing this audit
 
