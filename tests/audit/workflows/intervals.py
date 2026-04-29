@@ -6,8 +6,9 @@ loads when a user picks the Intervals mode without uploading anything.
 """
 from pathlib import Path
 from lib import (
-    Check, at_least_check, equal_check, file_exists_check,
-    count_dir_files, head_lines, linecount, reset_dir, run_workflow, sha256,
+    Check, at_least_check, contract_invariant_checks, equal_check,
+    count_dir_files, head_lines, linecount, r_invocation_checks,
+    reset_dir, run_workflow, sha256,
 )
 
 
@@ -33,14 +34,6 @@ def run(repo_root: Path, runs_dir: Path) -> dict:
     universe = out_idx / "universe.txt"
     promoter_lengths = out_idx / "promoter_lengths.txt"
     plot_dir = out_pair / "plot"
-    # R draws histograms unconditionally (they're side artefacts) but the
-    # headline heatmap PNGs only land if the data survives the p-value
-    # filter inside draw_heatmap.R. Use the histograms as the "did R
-    # actually run?" probe.
-    histogram_dirs_present = sum(
-        1 for sub in ("histogram", "histogram_overlap", "histogram_overlap_unique")
-        if (plot_dir / sub).is_dir()
-    )
 
     return {
         "run_label": "intervals",
@@ -58,19 +51,20 @@ def run(repo_root: Path, runs_dir: Path) -> dict:
         "motif_output_sha": sha256(motif_output),
         "motif_output_head": head_lines(motif_output, 3),
         "plot_pngs": count_dir_files(plot_dir, "*.png"),
-        "histogram_dirs": histogram_dirs_present,
         "command_displayed": " ".join(cmd),
+        "_index_dir": out_idx,
+        "_plot_dir": plot_dir,
     }
 
 
 def checks(data: dict) -> list[Check]:
     n_motifs_in_meme = 10  # data/demo_intervals/motif.meme
+    r_checks, _ = r_invocation_checks(data["_plot_dir"])
     return [
         equal_check("script exit code", 0, data["returncode"]),
 
         equal_check("fimohits/*.bin per motif",
-                    n_motifs_in_meme, data["fimohits_count"],
-                    note="one PMETBN01 file per motif in motif.meme"),
+                    n_motifs_in_meme, data["fimohits_count"]),
 
         equal_check("binomial_thresholds rows == motifs",
                     n_motifs_in_meme, data["binomial_lines"]),
@@ -94,34 +88,11 @@ def checks(data: dict) -> list[Check]:
                     note="captured against demo_intervals on this host; "
                          "differs if fixture or pair_parallel sort changes"),
 
-        # Heatmap stage: split into "R was invoked" + "headline PNGs landed".
-        # The demo intervals are small enough that draw_heatmap.R's p-adj
-        # filter can leave nothing to plot — that's expected, not a regression.
-        _r_invoked_check(data),
-        _headline_pngs_check(data),
+        # Cross-file motif-set invariants — independent of the script's
+        # own check_homotypic_contract.py call, so a future change that
+        # skips the validator would still surface here.
+        *contract_invariant_checks(data["_index_dir"],
+                                   name_prefix="indexing contract"),
+
+        *r_checks,
     ]
-
-
-def _r_invoked_check(data: dict) -> Check:
-    n = data["histogram_dirs"]
-    if n == 3:
-        return Check.passing("Rscript invoked (3 histogram subdirs present)",
-                             "3", n)
-    if n == 0:
-        return Check.warning("Rscript invoked (3 histogram subdirs present)",
-                             "3", "0",
-                             note="Rscript may not be installed; data outputs are still valid")
-    return Check.failing("Rscript invoked (3 histogram subdirs present)",
-                         "3", n,
-                         note="partial R run — investigate")
-
-
-def _headline_pngs_check(data: dict) -> Check:
-    n = data["plot_pngs"]
-    if n == 3:
-        return Check.passing("3 headline heatmap PNGs rendered", "3", n)
-    if n == 0 and data["histogram_dirs"] == 3:
-        return Check.warning("3 headline heatmap PNGs rendered", "3", "0",
-                             note="R ran but draw_heatmap.R's p-adj filter "
-                                  "left nothing to plot (expected on small demo data)")
-    return Check.failing("3 headline heatmap PNGs rendered", "3", n)

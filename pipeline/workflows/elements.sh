@@ -39,6 +39,16 @@ Strategy + element (interactive prompt if either is omitted):
                  (also accepts the GFF3 names: three_prime_UTR, five_prime_UTR)
 
 Optional:
+  -m <Yes|No>    only meaningful with `-s longest -e mRNA` — keep the full
+                 mRNA span (Yes) or subtract that isoform's UTRs to leave
+                 CDS-spanning fragments (No, default). Three biologically
+                 distinct mRNA modes from -e mRNA + this flag:
+                   -e mRNA -m Yes  : full mRNA (UTRs + CDS, single span)
+                   -e mRNA -m No   : mRNA minus UTRs (CDS, but as one span
+                                     per isoform — different from -e CDS,
+                                     which gives per-CDS-fragment intervals)
+                   -e CDS / exon   : per-fragment intervals (no aggregation)
+                 Ignored for any other -e or -s merged.
   -t <threads>   threads (default: 8)
   -d <yes|no>    delete intermediate files in the homotypic stage
                  (default: longest=no, merged=yes — historical baselines)
@@ -56,13 +66,15 @@ EOF
 
 strategy=
 genomic_element=
+mrna_full=
 threads=8
 delete_temp=
 
-while getopts ":s:e:t:d:h" opt; do
+while getopts ":s:e:m:t:d:h" opt; do
     case $opt in
         s) strategy=$OPTARG ;;
         e) genomic_element=$OPTARG ;;
+        m) mrna_full=$OPTARG ;;
         t) threads=$OPTARG ;;
         d) delete_temp=$OPTARG ;;
         h) usage; exit 0 ;;
@@ -113,6 +125,25 @@ if [[ -z $genomic_element ]]; then
     esac
 fi
 
+# -m / mrna_full handling.
+#   - Default No (the pre-merge 06_elements_longest.sh historical default).
+#   - Validate Yes/No.
+#   - Warn if the user passed -m with a strategy/element where it has no
+#     effect — silently accepting it would mask a real misuse.
+if [[ -z $mrna_full ]]; then
+    mrna_full=No
+fi
+case $mrna_full in
+    Yes|yes|Y|y|true)  mrna_full=Yes ;;
+    No|no|N|n|false)   mrna_full=No  ;;
+    *) echo "Invalid -m '$mrna_full' (must be Yes|No)" >&2; exit 1 ;;
+esac
+if [[ "$strategy" != "longest" || "$genomic_element" != "mRNA" ]] \
+   && [[ "$mrna_full" == "Yes" ]]; then
+    echo "Warning: -m only takes effect with -s longest -e mRNA; ignoring." >&2
+    mrna_full=No
+fi
+
 # Default delete-intermediates differs between strategies (historical
 # baselines from when 06/07 were separate wrappers — preserved here).
 if [[ -z $delete_temp ]]; then
@@ -124,6 +155,9 @@ fi
 
 print_fluorescent_yellow "Strategy:        $strategy"
 print_fluorescent_yellow "Genomic element: $genomic_element ($gff3id)"
+if [[ "$strategy" == "longest" && "$genomic_element" == "mRNA" ]]; then
+    print_fluorescent_yellow "mRNA full span:  $mrna_full"
+fi
 print_fluorescent_yellow "Threads:         $threads"
 print_fluorescent_yellow "Delete temps:    $delete_temp"
 
@@ -189,6 +223,7 @@ $HOMOTYPIC                  \
     -o "$homotypic_output"  \
     -s "$strategy"          \
     -e "$genomic_element"   \
+    -m "$mrna_full"         \
     -i "$gff3id"            \
     -k "$maxk"              \
     -n "$topn"              \

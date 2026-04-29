@@ -77,7 +77,38 @@ The anchors currently committed:
 | pair_only | `data/pairing/demo` → `motif_output.txt` | `0af5b936606fd3` |
 | intervals | `data/demo_intervals` → `motif_output.txt` | `4858412a091983` |
 | promoter | TAIR10 + Franco-Zorrilla → `motif_output.txt` | `4b24906abfe55e` |
-| elements | (no anchor — output varies per run on TAIR10 due to a known C-engine non-determinism documented in `tests/baseline/README.md`; the audit verifies structure + counts instead) |
+| elements | per-task `motif_output.txt` (one anchor per `data/genes/*.txt`) | see `TASK_ANCHORS` in `workflows/elements.py` |
+
+`elements` carries one anchor per gene-task; tasks present in the dict
+with a `None` value are "known but not yet blessed" — the first audit
+run after this commit captures the real sha and emits a WARN with the
+captured value, which a reviewer then pastes into `TASK_ANCHORS`. New
+tasks (gene lists added later) appear as a separate WARN until added
+to the dict.
+
+(An older version of this README cited "C-engine non-determinism" as
+the reason for omitting elements anchors. That justification was
+stale — `elements.sh` now uses `index_fimo_fused`, which is
+deterministic; the C-indexer caveat in `tests/baseline/README.md`
+applies to a different workflow.)
+
+## Cross-file invariants (independent of the script's own validator)
+
+Three of the four workflows (promoter, intervals, elements) call
+`pipeline/python/check_homotypic_contract.py` themselves at the end
+of indexing. The audit ALSO runs an in-process equivalent — see
+`lib.contract_invariant_checks(index_dir)` — so a future change that
+skips or weakens the script-side validator still surfaces as audit
+FAIL rows. The three checks emitted:
+
+  - binomial_thresholds.txt motifs == IC.txt motifs
+  - binomial_thresholds.txt motifs == fimohits/ basenames
+  - IC.txt motifs == fimohits/ basenames
+
+For pair_only the input index is `data/pairing/demo`, which
+intentionally ships only 6 fimohits files for ~110 binomial threshold
+rows. The same three checks run there but at WARN severity (a real
+mismatch you should know about, not a regression you should fix).
 
 ## Adding a workflow
 

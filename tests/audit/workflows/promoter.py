@@ -8,8 +8,9 @@ in commit d2663c0).
 """
 from pathlib import Path
 from lib import (
-    Check, at_least_check, equal_check, file_exists_check,
-    count_dir_files, head_lines, linecount, reset_dir, run_workflow, sha256,
+    Check, at_least_check, contract_invariant_checks, equal_check,
+    count_dir_files, head_lines, linecount, r_invocation_checks,
+    reset_dir, run_workflow, sha256,
 )
 
 
@@ -34,11 +35,6 @@ def run(repo_root: Path, runs_dir: Path) -> dict:
     universe = homo / "universe.txt"
     promoter_lengths = homo / "promoter_lengths.txt"
 
-    histogram_dirs_present = sum(
-        1 for sub in ("histogram", "histogram_overlap", "histogram_overlap_unique")
-        if (plot / sub).is_dir()
-    )
-
     return {
         "run_label": "promoter",
         "returncode": rc["returncode"],
@@ -56,13 +52,15 @@ def run(repo_root: Path, runs_dir: Path) -> dict:
         "motif_output_sha": sha256(motif_output),
         "motif_output_head": head_lines(motif_output, 3),
         "plot_pngs": count_dir_files(plot, "*.png"),
-        "histogram_dirs": histogram_dirs_present,
         "command_displayed": " ".join(cmd),
+        "_index_dir": homo,
+        "_plot_dir": plot,
     }
 
 
 def checks(data: dict) -> list[Check]:
     n_motifs_in_meme = 113  # data/Franco-Zorrilla_et_al_2014.meme
+    r_checks, _ = r_invocation_checks(data["_plot_dir"])
     return [
         equal_check("script exit code", 0, data["returncode"]),
 
@@ -90,28 +88,10 @@ def checks(data: dict) -> list[Check]:
                     data["motif_output_sha"],
                     note="anchor matches the recorded cli/03_promoter baseline"),
 
-        _r_invoked_check(data),
-        _headline_pngs_check(data),
+        # Cross-file motif-set invariants — independent of the script's
+        # own check_homotypic_contract.py call.
+        *contract_invariant_checks(data["_index_dir"],
+                                   name_prefix="indexing contract"),
+
+        *r_checks,
     ]
-
-
-def _r_invoked_check(data: dict) -> Check:
-    n = data["histogram_dirs"]
-    if n == 3:
-        return Check.passing("Rscript invoked (3 histogram subdirs present)", "3", n)
-    if n == 0:
-        return Check.warning("Rscript invoked (3 histogram subdirs present)",
-                             "3", "0",
-                             note="Rscript may not be installed; data outputs still valid")
-    return Check.failing("Rscript invoked (3 histogram subdirs present)", "3", n,
-                         note="partial R run")
-
-
-def _headline_pngs_check(data: dict) -> Check:
-    n = data["plot_pngs"]
-    if n == 3:
-        return Check.passing("3 headline heatmap PNGs rendered", "3", n)
-    if n == 0 and data["histogram_dirs"] == 3:
-        return Check.warning("3 headline heatmap PNGs rendered", "3", "0",
-                             note="R ran but the p-adj filter left nothing")
-    return Check.failing("3 headline heatmap PNGs rendered", "3", n)

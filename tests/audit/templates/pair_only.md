@@ -35,8 +35,10 @@ records every position in every promoter where `m` was found, along with:
 - `IC.txt` — per-motif positional information content, used by
   pair_parallel as a sanity floor (skip motifs less informative than
   `-i <ic_threshold>`).
-- `fimohits/<MOTIF>.bin` — the per-motif hit list in PMETBN01 binary
-  format (sequence name + start/stop/strand + score + p-value).
+- `fimohits/<MOTIF>.{txt,bin}` — the per-motif hit list. Modern indexes
+  produced by `index_fimo_fused` are PMETBN01 binary (`.bin`); older
+  text-format indexes (`.txt`) are still accepted by `pair_parallel`,
+  and the bundled `data/pairing/demo` fixture uses text.
 - `promoter_lengths.txt`, `universe.txt` — universe metadata.
 
 The schema is defined in [`docs/methods/homotypic-contract.md`](../methods/homotypic-contract.md).

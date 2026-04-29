@@ -29,33 +29,48 @@ but can have different element boundaries (e.g. 5' UTR length varies
 across splice variants). Two strategies:
 
 - **`-s longest`** — pick the single isoform whose total element span
-  is greatest, keep every fragment of that isoform. For `-e mRNA -m No`
-  also subtracts that isoform's UTRs to leave CDS-spanning fragments.
+  is greatest, keep every fragment of that isoform. The default for
+  research runs.
 - **`-s merged`** — take the per-gene UNION of all isoforms' element
   intervals (overlapping intervals merged into a non-redundant set).
   No isoform specificity, no UTR subtraction.
 
+For `-e mRNA` specifically there are **three biologically distinct modes**
+depending on `-s` and `-m`:
+
+| `-s` / `-e` / `-m` | What gets indexed | When to use |
+|---|---|---|
+| `-s longest -e mRNA -m Yes` | the longest isoform's full mRNA span (UTRs + CDS, single interval per gene) | binding analysis where 5'/3' UTR regulatory sites matter equally to CDS |
+| `-s longest -e mRNA -m No` (default) | the same isoform with its annotated UTRs subtracted (CDS span as one interval per gene) | "what binds along the coding span" without UTR contamination, but at gene granularity (one interval per gene, not per CDS fragment) |
+| `-s longest -e CDS` (or `-e exon`) | per-CDS-fragment / per-exon intervals from the longest isoform | per-fragment resolution — useful for asking whether motif co-occurrence localises to specific CDS fragments / exons |
+
+`-m` is ignored for `-s merged` and for any non-mRNA element.
+
 Both strategies typically produce multiple intervals per gene
-(e.g. 3 exons → 3 intervals). The script tags each interval as
-`__GENE__N` (gene name + 1-based index) so FIMO can scan them
-separately, then a **gene-level fold** in step 9 collapses per-interval
-hits back to per-gene rows so pair_parallel sees one row per gene.
+(e.g. 3 exons → 3 intervals; one mRNA span → 1 interval). The script
+tags each interval as `__GENE__N` (gene name + 1-based index) so FIMO
+can scan them separately, then a **gene-level fold** in step 9
+collapses per-interval hits back to per-gene rows so pair_parallel
+sees one row per gene.
 
 ## What the script does, step by step
 
 | # | Stage | What runs | Why |
 |---|---|---|---|
-| 1 | Argument + element prompt | `-s longest\|merged`, `-e 3UTR\|5UTR\|mRNA\|CDS\|exon` | Strategy + element are the two axes |
+| 1 | Argument + element prompt | `-s longest\|merged`, `-e 3UTR\|5UTR\|mRNA\|CDS\|exon`, optional `-m Yes\|No` | Strategy + element + (mRNA only) full-span flag |
 | 2 | TAIR10 fetch (if absent) | `bash pipeline/data/fetch_tair10.sh` | One-shot download |
 | 3 | Chromosome-name preflight | GFF3 first chrom vs FASTA first header | Same fail-fast as `promoter.sh` |
-| 4 | Element BED extraction | `cli/_pmet_index_element.sh` step 1 — awk over GFF3 column 3 | Filters rows where `feature == element` and pulls `<key>=<id>` from the attributes column |
-| 5 | Isoform aggregation | `cli/_pmet_index_element.sh` step 2 — `longest`/`merged` branch | See "biological setup". `longest` picks per gene + may subtract UTRs; `merged` does `bedtools merge` per gene |
-| 6 | Interval tagging + length filter | append `__GENE__N`, drop fragments < 30 bp | The tag survives FIMO scanning so step 9 can demangle |
-| 7 | Promoter FASTA + universe + lengths | `bedtools getfasta` → `promoter.fa`; `cut -f1` → `universe.txt`; per-interval lengths | Standard indexing inputs |
-| 8 | FIMO + indexing | one `index_fimo_fused` call (OpenMP) | Replaces the older two-step (split MEME → parallel fimo → separate pmet indexer) flow that depended on PMET-patched `--topn`/`--topk` flags absent from upstream MEME's `fimo`. See commit `d2663c0` |
-| 9 | **Gene-level fold** | `pipeline/python/collapse_element_fimohits.py` | Decodes PMETBN01 binary fimohits, strips `__GENE__N` from sequence names, groups hits by gene, keeps top-`maxk` per gene by ascending p-value, filters against the per-motif binomial threshold, re-encodes. Also normalizes `binomial_thresholds.txt` motif IDs to upper-case to match IC.txt and the fimohits filenames |
-| 10 | Indexing contract validation | `pipeline/python/check_homotypic_contract.py <homotypic>` | Catches motif-id case mismatches and missing files |
-| 11 | Heterotypic loop over `data/genes/*.txt` | for each task: filter by universe → `pair_parallel` → optional heatmaps | Per-task `02_heterotypic_<task>/motif_output.txt`. Heatmap failures (e.g. ggsave's 50-inch dimension cap on huge tasks) are non-fatal — the loop continues |
+| 4 | Element BED extraction | `_pmet_index_element.sh` step 1 — awk over GFF3 column 3 | Filters rows where `feature == element`; pulls `<key>=<id>` from the attributes column |
+| 5 | Isoform aggregation | `_pmet_index_element.sh` step 2 — `longest` / `merged` branch (and the optional UTR-subtraction sub-step for `-s longest -e mRNA -m No`) | See "biological setup" |
+| 6 | Interval tagging + length filter | `_pmet_index_element.sh` step 3 — append `__GENE__N`, drop fragments < 30 bp | The tag survives FIMO scanning so step 10 can demangle it |
+| 7 | Universe + per-interval lengths | `_pmet_index_element.sh` step 4 — `cut -f1 promoter_lengths.txt` → `universe.txt` | Index metadata |
+| 8 | Promoter FASTA extract | `_pmet_index_element.sh` step 5 — `bedtools getfasta -s` (strand-aware) over a linearised + faidx'd genome | Per-interval sequences for FIMO |
+| 9 | Markov background | `_pmet_index_element.sh` step 6 — `fasta-get-markov` over the just-extracted promoter set | Zero-order base composition; FIMO uses it as the null model so p-values reflect the local element composition rather than the genome's |
+| 10 | IC.txt | `_pmet_index_element.sh` step 7 — `calculateICfrommeme_IC_to_csv.py` | Per-motif positional information content; `pair_parallel` uses this as a sanity floor (skip motifs less informative than `-i`) |
+| 11 | FIMO + indexing | `_pmet_index_element.sh` step 8 — one `index_fimo_fused` call (OpenMP) | Replaces the older two-step (split MEME → parallel fimo → separate pmet indexer) flow that depended on PMET-patched `--topn`/`--topk` flags absent from upstream MEME's `fimo` (commit `d2663c0`) |
+| 12 | **Gene-level fold** | `_pmet_index_element.sh` step 9 — `pipeline/python/collapse_element_fimohits.py` | Decodes PMETBN01 binary fimohits, strips `__GENE__N` from sequence names, groups hits by gene, keeps top-`maxk` per gene by ascending p-value, filters against the per-motif binomial threshold, re-encodes. Also normalises `binomial_thresholds.txt` motif IDs to upper-case to match IC.txt and the fimohits filenames |
+| 13 | Indexing contract validation | `pipeline/python/check_homotypic_contract.py <homotypic>` | Catches motif-id case mismatches and missing files |
+| 14 | Heterotypic loop over `data/genes/*.txt` | for each task: filter by universe → `pair_parallel` → optional heatmaps | Per-task `02_heterotypic_<task>/motif_output.txt`. Heatmap failures (e.g. ggsave's 50-inch dimension cap on huge tasks) are non-fatal — the loop continues |
 
 ## Run snapshot
 

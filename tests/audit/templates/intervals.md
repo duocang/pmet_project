@@ -29,9 +29,22 @@ within that universe.
 A subtlety: FIMO's input parser and PMET's binary fimohits format
 don't tolerate `:` characters in sequence names (FIMO mis-parses the
 header, the binary records are length-prefixed so a sed restore would
-shift bytes). The script substitutes `:` → `__COLON__` on the way in
-and restores `:` only on the human-facing text outputs at the end —
-**binary fimohits stay sanitized internally**.
+shift bytes). Two sed passes handle this:
+
+- On the input FASTA: `sed 's/^\(>.*\):/\1__COLON__/g'` rewrites the
+  **last `:` on each header line** (the `\(.*\)` is greedy + the `^>`
+  anchor restricts the match to header lines). Body sequence lines
+  are untouched. For the typical `>chr:start-end(strand)` IDs there's
+  only one `:` per header, so "last" coincides with "the only one";
+  multi-colon names get only their final `:` rewritten — anything
+  earlier is preserved.
+- On the user's gene list: `sed 's/:/__COLON__/g'` rewrites **every
+  `:`**, since there are no header markers to anchor against and the
+  list is line-per-name.
+
+After indexing + pairing, only the user-facing text outputs
+(`motif_output.txt`, `genes_used_PMET.txt`, `genes_not_found.txt`)
+are restored to `:` — **binary fimohits stay sanitised internally**.
 
 ## What the script does, step by step
 

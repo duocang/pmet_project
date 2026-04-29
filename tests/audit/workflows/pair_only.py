@@ -8,7 +8,7 @@ full TAIR10 + Franco-Zorrilla index.
 """
 from pathlib import Path
 from lib import (
-    Check, at_least_check, equal_check, file_exists_check,
+    Check, at_least_check, contract_invariant_checks, equal_check,
     head_lines, linecount, reset_dir, run_workflow, sha256,
 )
 
@@ -43,6 +43,9 @@ def run(repo_root: Path, runs_dir: Path) -> dict:
         "genes_used_lines": linecount(genes_used),
         "pmet_log_lines": linecount(pmet_log),
         "command_displayed": " ".join(cmd),
+        # held for the contract invariant check (uses the INPUT index dir,
+        # not the output, since pair_only doesn't write a homotypic dir)
+        "_index_dir": repo_root / "data" / "pairing" / "demo",
     }
 
 
@@ -61,4 +64,12 @@ def checks(data: dict) -> list[Check]:
                        note="genes from -g that survived the universe filter"),
         at_least_check("pmet.log non-empty",
                        1, data["pmet_log_lines"]),
+        # Cross-file invariant on the INPUT index. data/pairing/demo
+        # intentionally ships only 6 fimohits files for ~110 binomial
+        # threshold rows (it's a small fixture, not a full index), so
+        # the strict contract validator would FAIL — record as WARN
+        # instead, with the motif-set diff visible in the table.
+        *contract_invariant_checks(data["_index_dir"],
+                                   name_prefix="input index contract",
+                                   severity="warn"),
     ]

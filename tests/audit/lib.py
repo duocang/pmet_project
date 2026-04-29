@@ -1,20 +1,35 @@
 """Shared helpers for tests/audit/ workflow audit generation.
 
-Each workflow under tests/audit/workflows/<name>.py defines:
+Each workflow under tests/audit/workflows/<name>.py exports two callables:
 
-  RUN_LABEL     short string used for the run subdirectory and headings
-  TEMPLATE      filename under tests/audit/templates/
   def run(repo_root: Path, runs_dir: Path) -> dict:
       Execute the workflow against canonical inputs and return a flat
-      dict of (str, anything) — the keys feed both the verification
-      checks and the template substitutions.
+      dict whose keys feed BOTH the verification checks and the
+      `<<PLACEHOLDER>>` substitutions in the matching template under
+      tests/audit/templates/<name>.md. One key is treated specially by
+      the driver: `run_label` (str) is used for the per-run header.
 
   def checks(data: dict) -> list[Check]:
       The list of expected-vs-observed assertions to render in the
       audit's verification table.
 
-The driver (generate.py) renders the template with the data dict and
-the checks table, then writes the result to docs/workflows/<name>.md.
+The driver (generate.py) renders the template with the data dict +
+checks table, then writes to docs/workflows/<name>.md.
+
+Cross-workflow helpers offered here:
+
+  Check / Check.passing / Check.failing / Check.warning   primitives
+  equal_check, at_least_check, file_exists_check          common shapes
+  contract_invariant_checks(index_dir)                    cross-file
+                                                          motif-set
+                                                          sanity over a
+                                                          homotypic dir
+  r_invocation_checks(plot_dir)                           shared between
+                                                          intervals + promoter
+  run_workflow / sha256 / linecount / head_lines /
+  count_dir_files / reset_dir                             IO helpers
+  render_check_table / render_template / overall_verdict
+  run_header                                              presentation
 """
 from __future__ import annotations
 
@@ -135,17 +150,6 @@ def head_lines(path: Path, n: int = 3) -> str:
     return "\n".join(out)
 
 
-def filesize_human(path: Path) -> str:
-    if not path.exists():
-        return "missing"
-    n = path.stat().st_size
-    for unit in ("B", "KB", "MB", "GB"):
-        if n < 1024:
-            return f"{n:.0f} {unit}" if unit == "B" else f"{n:.1f} {unit}"
-        n /= 1024
-    return f"{n:.1f} TB"
-
-
 def count_dir_files(path: Path, glob: str = "*") -> int:
     if not path.is_dir():
         return 0
@@ -157,6 +161,128 @@ def reset_dir(path: Path) -> Path:
         shutil.rmtree(path)
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+# ---------------------------------------------------------------------------
+# Cross-file invariant verification (homotypic contract)
+# ---------------------------------------------------------------------------
+def _read_threshold_motifs(path: Path) -> set[str]:
+    """First whitespace-separated field of each non-blank line."""
+    motifs = set()
+    if not path.exists():
+        return motifs
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        motifs.add(line.split()[0])
+    return motifs
+
+
+def _read_ic_motifs(path: Path) -> set[str]:
+    """IC.txt has the same shape: <motif><ws><values...>."""
+    return _read_threshold_motifs(path)
+
+
+def _list_fimohits_motifs(fimohits_dir: Path) -> set[str]:
+    """Stem of every .bin / .txt file under fimohits/."""
+    if not fimohits_dir.is_dir():
+        return set()
+    return {p.stem for p in fimohits_dir.iterdir()
+            if p.is_file() and p.suffix in {".bin", ".txt"}}
+
+
+def contract_invariant_checks(
+    index_dir: Path,
+    *,
+    name_prefix: str = "homotypic contract",
+    severity: str = "fail",
+) -> list[Check]:
+    """Verify the cross-file motif-set invariants over a homotypic dir.
+
+    Returns three checks:
+      - binomial_thresholds.txt motifs == IC.txt motifs
+      - binomial_thresholds.txt motifs == fimohits/ basenames
+      - IC.txt motifs == fimohits/ basenames
+
+    `severity` controls how a mismatch renders:
+      "fail" — emit a FAIL check (use for indexing workflows that own
+               the invariant — promoter, intervals, elements).
+      "warn" — emit a WARN (use for fixtures that are known partial,
+               e.g. data/pairing/demo which only ships 6 fimohits).
+    """
+    bin_motifs = _read_threshold_motifs(index_dir / "binomial_thresholds.txt")
+    ic_motifs = _read_ic_motifs(index_dir / "IC.txt")
+    fhits_motifs = _list_fimohits_motifs(index_dir / "fimohits")
+
+    def make(name: str, lhs: set[str], rhs: set[str], lhs_name: str, rhs_name: str) -> Check:
+        if lhs == rhs:
+            return Check.passing(name, "set equal", f"|both|={len(lhs)}")
+        only_lhs = sorted(lhs - rhs)
+        only_rhs = sorted(rhs - lhs)
+        diff_summary = f"only_{lhs_name}={only_lhs[:3]}{'...' if len(only_lhs)>3 else ''}, " \
+                       f"only_{rhs_name}={only_rhs[:3]}{'...' if len(only_rhs)>3 else ''}"
+        if severity == "warn":
+            return Check.warning(name, "set equal", diff_summary,
+                                 note="motif-set mismatch — see note above")
+        return Check.failing(name, "set equal", diff_summary)
+
+    return [
+        make(f"{name_prefix}: binomial == IC motifs",
+             bin_motifs, ic_motifs, "binomial", "IC"),
+        make(f"{name_prefix}: binomial == fimohits motifs",
+             bin_motifs, fhits_motifs, "binomial", "fimohits"),
+        make(f"{name_prefix}: IC == fimohits motifs",
+             ic_motifs, fhits_motifs, "IC", "fimohits"),
+    ]
+
+
+# ---------------------------------------------------------------------------
+# R heatmap invocation checks (intervals + promoter share these)
+# ---------------------------------------------------------------------------
+def _count_histogram_dirs(plot_dir: Path) -> int:
+    """draw_heatmap.R unconditionally creates 3 histogram subdirs.
+    Their presence is the "did Rscript actually run?" probe."""
+    if not plot_dir.is_dir():
+        return 0
+    return sum(
+        1 for sub in ("histogram", "histogram_overlap", "histogram_overlap_unique")
+        if (plot_dir / sub).is_dir()
+    )
+
+
+def r_invocation_checks(plot_dir: Path) -> tuple[list[Check], dict]:
+    """Pair of (Rscript invoked? + headline PNGs landed?) checks.
+
+    Returns (checks, data) — `data` is a dict with histogram_dirs and
+    headline_pngs counts that the caller can also surface in the
+    template's run-snapshot section.
+    """
+    histograms = _count_histogram_dirs(plot_dir)
+    pngs = count_dir_files(plot_dir, "*.png")
+
+    if histograms == 3:
+        c1 = Check.passing("Rscript invoked (3 histogram subdirs present)",
+                           "3", histograms)
+    elif histograms == 0:
+        c1 = Check.warning("Rscript invoked (3 histogram subdirs present)",
+                           "3", "0",
+                           note="Rscript may not be installed; data outputs still valid")
+    else:
+        c1 = Check.failing("Rscript invoked (3 histogram subdirs present)",
+                           "3", histograms,
+                           note="partial R run — investigate")
+
+    if pngs == 3:
+        c2 = Check.passing("3 headline heatmap PNGs rendered", "3", pngs)
+    elif pngs == 0 and histograms == 3:
+        c2 = Check.warning("3 headline heatmap PNGs rendered", "3", "0",
+                           note="R ran but draw_heatmap.R's p-adj filter "
+                                "left nothing to plot (expected on small demo data)")
+    else:
+        c2 = Check.failing("3 headline heatmap PNGs rendered", "3", pngs)
+
+    return [c1, c2], {"histogram_dirs": histograms, "headline_pngs": pngs}
 
 
 # ---------------------------------------------------------------------------
