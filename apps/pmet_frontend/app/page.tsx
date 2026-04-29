@@ -195,13 +195,20 @@ export default function HomePage() {
               <span>{t('home.learn.what.title')}</span>
               <span className="text-slate-400 transition-transform group-open:rotate-180">▾</span>
             </summary>
-            <div className="mt-6">
+            <div className="mt-6 space-y-5">
+              <p className="leading-7 text-slate-600">{t('home.learn.what.intro')}</p>
+              <ul className="list-disc space-y-2 pl-6 text-slate-600 marker:text-primary-600">
+                <li>{t('home.learn.what.bullet1')}</li>
+                <li>{t('home.learn.what.bullet2')}</li>
+                <li>{t('home.learn.what.bullet3')}</li>
+                <li>{t('home.learn.what.bullet4')}</li>
+              </ul>
               <ZoomableImage
-                src={`/figures/algorithm-two-stages-${langSuffix}.svg`}
+                src={`/figures/pmet-promoter-pair-enrichment-${langSuffix}.svg`}
                 alt={t('home.learn.what.alt')}
                 className="w-full rounded-lg border border-slate-200 bg-white"
               />
-              <p className="mt-4 text-center text-sm text-slate-500">{t('home.learn.what.caption')}</p>
+              <p className="text-center text-sm text-slate-500">{t('home.learn.what.caption')}</p>
             </div>
           </details>
 
@@ -210,32 +217,18 @@ export default function HomePage() {
               <span>{t('home.learn.workflow.title')}</span>
               <span className="text-slate-400 transition-transform group-open:rotate-180">▾</span>
             </summary>
-            <div className="mt-6">
+            <div className="mt-6 space-y-5">
+              <p className="leading-7 text-slate-600">{t('home.learn.workflow.intro')}</p>
+              <ul className="list-disc space-y-2 pl-6 text-slate-600 marker:text-primary-600">
+                <li>{t('home.learn.workflow.bullet1')}</li>
+                <li>{t('home.learn.workflow.bullet2')}</li>
+              </ul>
               <ZoomableImage
-                src={`/figures/workflow-overview-${langSuffix}.svg`}
+                src={`/figures/algorithm-two-stages-${langSuffix}.svg`}
                 alt={t('home.learn.workflow.alt')}
                 className="w-full rounded-lg border border-slate-200 bg-white"
               />
-              <p className="mt-4 text-center text-sm text-slate-500">{t('home.learn.workflow.caption')}</p>
-            </div>
-          </details>
-
-          <details className="card group">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold text-slate-950">
-              <span>{t('home.learn.combos.title')}</span>
-              <span className="text-slate-400 transition-transform group-open:rotate-180">▾</span>
-            </summary>
-            <div className="mt-6 grid gap-6 md:grid-cols-2">
-              <div>
-                <h4 className="mb-3 text-center font-semibold text-slate-950">{t('home.learn.combos.homo.title')}</h4>
-                <ZoomableImage src="/figures/pmet_homotypic.png" alt={t('home.learn.combos.homo.alt')} className="w-full rounded-lg border border-slate-200 bg-white" />
-                <p className="mt-3 text-sm leading-6 text-slate-600">{t('home.learn.combos.homo.desc')}</p>
-              </div>
-              <div>
-                <h4 className="mb-3 text-center font-semibold text-slate-950">{t('home.learn.combos.hetero.title')}</h4>
-                <ZoomableImage src="/figures/pmet_heterotypic.png" alt={t('home.learn.combos.hetero.alt')} className="w-full rounded-lg border border-slate-200 bg-white" />
-                <p className="mt-3 text-sm leading-6 text-slate-600">{t('home.learn.combos.hetero.desc')}</p>
-              </div>
+              <p className="text-center text-sm text-slate-500">{t('home.learn.workflow.caption')}</p>
             </div>
           </details>
 
@@ -244,17 +237,20 @@ export default function HomePage() {
               <span>{t('home.learn.modes.title')}</span>
               <span className="text-slate-400 transition-transform group-open:rotate-180">▾</span>
             </summary>
-            <div className="mt-6 grid gap-6 lg:grid-cols-2">
-              <div>
-                <h4 className="mb-3 text-center font-semibold text-slate-950">{t('home.learn.modes.prom.title')}</h4>
-                <ZoomableImage src="/figures/workflow_promoters.png" alt={t('home.learn.modes.prom.alt')} className="w-full rounded-lg border border-slate-200 bg-white" />
-                <p className="mt-3 text-sm leading-6 text-slate-600">{t('home.learn.modes.prom.desc')}</p>
-              </div>
-              <div>
-                <h4 className="mb-3 text-center font-semibold text-slate-950">{t('home.learn.modes.int.title')}</h4>
-                <ZoomableImage src="/figures/workflow_intervals.png" alt={t('home.learn.modes.int.alt')} className="w-full rounded-lg border border-slate-200 bg-white" />
-                <p className="mt-3 text-sm leading-6 text-slate-600">{t('home.learn.modes.int.desc')}</p>
-              </div>
+            <div className="mt-6 space-y-5">
+              <p className="leading-7 text-slate-600">{t('home.learn.modes.intro')}</p>
+              <ul className="list-disc space-y-2 pl-6 text-slate-600 marker:text-primary-600">
+                <li>{t('home.learn.modes.bullet1')}</li>
+                <li>{t('home.learn.modes.bullet2')}</li>
+                <li>{t('home.learn.modes.bullet3')}</li>
+                <li>{t('home.learn.modes.bullet4')}</li>
+              </ul>
+              <ZoomableImage
+                src={`/figures/workflow-overview-${langSuffix}.svg`}
+                alt={t('home.learn.modes.alt')}
+                className="w-full rounded-lg border border-slate-200 bg-white"
+              />
+              <p className="text-center text-sm text-slate-500">{t('home.learn.modes.caption')}</p>
             </div>
           </details>
         </div>

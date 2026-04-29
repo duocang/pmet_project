@@ -70,31 +70,43 @@ const en = {
   'home.learn.eyebrow': 'Method context',
   'home.learn.heading': 'Understand what PMET is measuring',
   'home.learn.what.title': 'What is PMET?',
-  'home.learn.what.alt': 'PMET algorithm: two stages',
+  'home.learn.what.intro':
+    'PMET (Paired Motif Enrichment Tool) identifies motif pairs that co-occur in the promoters of a user-supplied gene set significantly more often than in the genome-wide background.',
+  'home.learn.what.bullet1':
+    'Input — a target gene set (e.g., heat-shock genes, cell-type up-regulated genes) plus a reference promoter universe.',
+  'home.learn.what.bullet2':
+    'Test — for every motif pair, build a 2×2 contingency table (target vs. background × with-pair vs. without-pair) and run a hypergeometric test.',
+  'home.learn.what.bullet3':
+    'Correction — apply BH or Bonferroni multiple-testing correction across all motif pairs.',
+  'home.learn.what.bullet4':
+    'Output — a ranked list of motif pairs with adjusted p-values, surfacing candidate cooperating TFs.',
+  'home.learn.what.alt': 'PMET problem: motif pair enrichment in promoters',
   'home.learn.what.caption':
-    'Two stages: an expensive but reusable indexing pass, then a cheap pairing test against any gene list.',
+    'PMET asks whether two motifs co-occur on the same promoter in the target gene set more often than expected by chance.',
   'home.learn.workflow.title': 'PMET Workflow',
-  'home.learn.workflow.alt': 'PMET workflow overview',
+  'home.learn.workflow.intro':
+    'PMET splits the computation into two stages so the expensive motif-scanning work is paid only once per genome × motif database.',
+  'home.learn.workflow.bullet1':
+    'Indexing stage (expensive, reusable) — scan the entire genome for motif occurrences and build a homotypic index. Done once per genome × motif DB.',
+  'home.learn.workflow.bullet2':
+    'Pairing stage (cheap, per-query) — reuse the index to compute pair enrichment for any user-supplied gene list, in seconds to minutes.',
+  'home.learn.workflow.alt': 'PMET algorithm: two stages',
   'home.learn.workflow.caption':
-    'Four entry points (promoter, intervals, elements, pair_only) feed the same shared homotypic-index schema, then the same heterotypic pair-test engine.',
-  'home.learn.combos.title': 'Motif Combinations',
-  'home.learn.combos.homo.title': 'Homotypic',
-  'home.learn.combos.homo.alt': 'Homotypic motif combinations',
-  'home.learn.combos.homo.desc':
-    'Multiple instances of the same motif in one promoter — quantifies co-binding by a single TF family.',
-  'home.learn.combos.hetero.title': 'Heterotypic',
-  'home.learn.combos.hetero.alt': 'Heterotypic motif combinations',
-  'home.learn.combos.hetero.desc':
-    'Pairs of different motifs in one promoter — detects cooperation between distinct TFs.',
+    'Indexing is the bottleneck; once cached, every subsequent gene-list analysis is fast and reproducible.',
   'home.learn.modes.title': 'Mode-specific Pipelines',
-  'home.learn.modes.prom.title': 'Promoters Pipeline',
-  'home.learn.modes.prom.alt': 'PMET workflow promoters',
-  'home.learn.modes.prom.desc':
-    'Extracts promoter regions from a genome and GFF3 annotation before motif scanning and pairing.',
-  'home.learn.modes.int.title': 'Intervals Pipeline',
-  'home.learn.modes.int.alt': 'PMET workflow intervals',
-  'home.learn.modes.int.desc':
-    'Skips promoter extraction and works directly on user-supplied intervals (e.g. ChIP-seq peaks, ATAC regions).',
+  'home.learn.modes.intro':
+    'PMET offers four entry modes for different input types. All converge on the same homotypic-index schema and the same heterotypic pair-test engine.',
+  'home.learn.modes.bullet1':
+    'promoter — extract promoter regions from a genome and GFF3 annotation, then scan and pair (the most common workflow).',
+  'home.learn.modes.bullet2':
+    'intervals — operate directly on user-supplied regions (ChIP-seq peaks, ATAC regions, etc.), skipping promoter extraction.',
+  'home.learn.modes.bullet3':
+    'elements — use a predefined set of regulatory elements as the scan universe.',
+  'home.learn.modes.bullet4':
+    'pair_only — skip indexing entirely; run pair enrichment against an already-built index.',
+  'home.learn.modes.alt': 'PMET workflow overview',
+  'home.learn.modes.caption':
+    'Four entry points feed the same homotypic-index schema, then the same heterotypic pair-test engine.',
 
   // about
   'about.title': 'About PMET',
@@ -422,31 +434,43 @@ const zh: Record<keyof typeof en, string> = {
   'home.learn.eyebrow': '方法背景',
   'home.learn.heading': '理解 PMET 在测量什么',
   'home.learn.what.title': 'PMET 是什么？',
-  'home.learn.what.alt': 'PMET 算法：两步走',
+  'home.learn.what.intro':
+    'PMET（Paired Motif Enrichment Tool）用于在用户给定的基因列表中，找出在 promoter 区域共同出现频率显著高于全基因组背景的 motif 对。',
+  'home.learn.what.bullet1':
+    '输入：目标基因集（例如热激高表达基因、某细胞类型上调基因），以及作为参考的 promoter 全集。',
+  'home.learn.what.bullet2':
+    '检验：对每个 motif pair 构建 2×2 列联表（目标集 vs 背景 × 含 pair vs 不含），做超几何检验。',
+  'home.learn.what.bullet3':
+    '校正：对所有 motif pair 的 p 值做 BH 或 Bonferroni 多重检验校正。',
+  'home.learn.what.bullet4':
+    '输出：按 adj.p 排序的显著 motif pair 列表，给出候选协同的 TF 组合。',
+  'home.learn.what.alt': 'PMET 关注的问题：启动子中的 motif pair 富集',
   'home.learn.what.caption':
-    '两个阶段：先做一次昂贵但可复用的 indexing，然后用同一索引对任意基因列表做廉价的 pairing 检验。',
+    'PMET 问的是：两个 motif 是否在目标基因 promoter 中共现得显著比随机背景更多。',
   'home.learn.workflow.title': 'PMET 工作流',
-  'home.learn.workflow.alt': 'PMET 工作流总览',
+  'home.learn.workflow.intro':
+    'PMET 把计算切成两个阶段，使得最昂贵的 motif 扫描每个"基因组 × motif 库"只需付费一次。',
+  'home.learn.workflow.bullet1':
+    '索引阶段（昂贵但可复用）：对参考基因组做一次完整 motif 扫描，构建 homotypic 索引；同一个基因组 × motif 库只需做一次。',
+  'home.learn.workflow.bullet2':
+    '配对阶段（廉价、每次查询）：在已建好的索引上对用户提供的基因列表做 pair 富集检验，秒到分钟级即可完成。',
+  'home.learn.workflow.alt': 'PMET 算法：两步走',
   'home.learn.workflow.caption':
-    '四种入口（promoter、intervals、elements、pair_only）汇入同一份 homotypic 索引格式，再共用同一异型 pair test 引擎。',
-  'home.learn.combos.title': 'Motif 组合',
-  'home.learn.combos.homo.title': '同型 (homotypic)',
-  'home.learn.combos.homo.alt': '同型 motif 组合',
-  'home.learn.combos.homo.desc':
-    '同一个 motif 在一个启动子中多次出现 — 量化某个 TF 家族的共同结合。',
-  'home.learn.combos.hetero.title': '异型 (heterotypic)',
-  'home.learn.combos.hetero.alt': '异型 motif 组合',
-  'home.learn.combos.hetero.desc':
-    '不同 motif 成对出现在一个启动子中 — 探测不同 TF 之间的协同。',
+    '索引是瓶颈；一旦缓存好，后续每个基因列表分析都很快，且可重复。',
   'home.learn.modes.title': '不同模式下的 pipeline',
-  'home.learn.modes.prom.title': '启动子 pipeline',
-  'home.learn.modes.prom.alt': 'PMET 启动子工作流',
-  'home.learn.modes.prom.desc':
-    '从基因组与 GFF3 注释中提取启动子区域，再做 motif 扫描与配对。',
-  'home.learn.modes.int.title': '区间 pipeline',
-  'home.learn.modes.int.alt': 'PMET 区间工作流',
-  'home.learn.modes.int.desc':
-    '跳过启动子提取，直接对用户提供的区间（如 ChIP-seq peak、ATAC 区段）操作。',
+  'home.learn.modes.intro':
+    'PMET 提供四种入口模式，对应不同的输入数据类型，但都汇入同一份索引格式与同一异型 pair test 引擎。',
+  'home.learn.modes.bullet1':
+    'promoter：从基因组 + GFF3 注释中提取启动子区域，再做扫描与配对（最常用的工作流）。',
+  'home.learn.modes.bullet2':
+    'intervals：直接对用户提供的区间（ChIP-seq peak、ATAC region 等）操作，跳过启动子提取。',
+  'home.learn.modes.bullet3':
+    'elements：使用预定义的调控元件集作为扫描全集。',
+  'home.learn.modes.bullet4':
+    'pair_only：跳过索引阶段，直接在已有索引上做 pair 富集检验。',
+  'home.learn.modes.alt': 'PMET 工作流总览',
+  'home.learn.modes.caption':
+    '四种入口（promoter、intervals、elements、pair_only）汇入同一份 homotypic 索引格式，再共用同一异型 pair test 引擎。',
 
   // about
   'about.title': '关于 PMET',
