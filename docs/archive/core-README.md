@@ -1,6 +1,6 @@
 # PMET
 
-PMET (Promoter Motif Enrichment Tool) identifies cooperative transcription factor (TF) activity by evaluating both homotypic and heterotypic motif combinations across promoter sets. It supports command-line and web deployments and ships with multiple implementations optimized for speed or feature depth.
+PMET (Paired Motif Enrichment Tool) identifies cooperative transcription factor (TF) activity by evaluating both homotypic and heterotypic motif combinations across promoter sets. It supports command-line and web deployments and ships with multiple implementations optimized for speed or feature depth.
 
 ## What PMET does
 

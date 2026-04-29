@@ -1,4 +1,4 @@
-# PMET - Promoter Motif Enrichment Tool
+# PMET - Paired Motif Enrichment Tool
 
 .PHONY: help start stop build rebuild rebuild-frontend rebuild-backend \
         restart restart-worker restart-nginx clean logs \

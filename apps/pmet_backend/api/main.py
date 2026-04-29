@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="PMET API",
-    description="Promoter Motif Enrichment Tool - Task Submission and Management API",
+    description="Paired Motif Enrichment Tool - Task Submission and Management API",
     version="1.0.0",
     lifespan=lifespan,
     docs_url="/api/docs",

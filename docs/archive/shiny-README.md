@@ -1,4 +1,4 @@
-# PMET — Promoter Motif Enrichment Tool
+# PMET — Paired Motif Enrichment Tool
 
 [www.PMET.online](http://pmet.online/)
 
