@@ -235,13 +235,17 @@ void motifComparison::colocTest(long universeSize, double ICthreshold, const std
   (void)ICthreshold;
   (void)clusterName;
 
+  // Each cluster is a separate test. Early returns must not retain the
+  // preceding cluster's p-value or hits; keep the pair's universe intact.
+  pval = 1.0;
+  genesInClusterWithBothMotifs.clear();
+
   long numGenesWithBothMotifs = genesInUniverseWithBothMotifs.size();
   clusterSize = genesInCluster.size();
 
   if (!numGenesWithBothMotifs || !clusterSize || !universeSize)
     return;
 
-  genesInClusterWithBothMotifs.clear();
   genesInClusterWithBothMotifs.reserve(numGenesWithBothMotifs);
 
   std::set_intersection(genesInUniverseWithBothMotifs.begin(), genesInUniverseWithBothMotifs.end(),

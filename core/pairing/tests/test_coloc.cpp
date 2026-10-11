@@ -61,33 +61,30 @@ motifComparison makeComp(long N, std::vector<GeneId> universeGenes) {
 
 }  // namespace
 
-TEST_CASE("colocTest: empty universe genes → no-op (pval unchanged)") {
+TEST_CASE("colocTest: empty universe genes have p = 1") {
   auto mc = makeComp(/*N=*/10, /*universe=*/{});
-  // recordSkippedPair set pval to 1.0 — colocTest's no-op early-return
-  // should leave it there.
   std::vector<GeneId> cluster = {1, 2, 3};
   mc.colocTest(/*N=*/10, /*ICthreshold=*/0.0, "c", cluster);
   REQUIRE_NEAR(mc.getpValue(), 1.0, 1e-12);
 }
 
-TEST_CASE("colocTest: empty cluster → no-op (pval unchanged)") {
+TEST_CASE("colocTest: empty cluster has p = 1") {
   auto mc = makeComp(10, {1, 2, 3, 4});
   std::vector<GeneId> cluster;
   mc.colocTest(10, 0.0, "c", cluster);
   REQUIRE_NEAR(mc.getpValue(), 1.0, 1e-12);
 }
 
-TEST_CASE("colocTest: universeSize 0 → no-op") {
+TEST_CASE("colocTest: universeSize 0 has p = 1") {
   auto mc = makeComp(10, {1, 2, 3});  // logf table still sized for tests
   std::vector<GeneId> cluster = {1, 2};
   mc.colocTest(/*N=*/0, 0.0, "c", cluster);
   REQUIRE_NEAR(mc.getpValue(), 1.0, 1e-12);
 }
 
-TEST_CASE("colocTest: zero intersection between universe + cluster → no-op") {
+TEST_CASE("colocTest: zero intersection between universe + cluster has p = 1") {
   // K = {1,2,3,4} but cluster = {7,8,9} — nothing in common.
-  // colocTest's set_intersection returns empty → return without
-  // updating pval.
+  // With no observed overlap, P(X >= 0) is 1.
   auto mc = makeComp(10, {1, 2, 3, 4});
   std::vector<GeneId> cluster = {7, 8, 9};
   mc.colocTest(10, 0.0, "c", cluster);
@@ -104,6 +101,53 @@ TEST_CASE("colocTest: hand-computed N=10, K=4, n=4, k=3 → 25/210") {
   std::vector<GeneId> cluster = {1, 2, 3, 5};  // n=4, intersection={1,2,3} → k=3
   mc.colocTest(10, 0.0, "c", cluster);
   REQUIRE_NEAR(mc.getpValue(), 25.0 / 210.0, 1e-10);
+}
+
+TEST_CASE("colocTest: combined clusters match separate runs in either processing order") {
+  const std::vector<GeneId> universe = {1, 2, 3, 4, 5};
+  const std::vector<std::vector<GeneId>> clusters = {
+      {1, 2, 3, 4, 5},  // strong enrichment
+      {6, 7, 8, 9, 10}, // zero overlap must have p = 1
+      {1, 6, 7, 8, 9},  // positive overlap after a zero-overlap cluster
+  };
+  for (const auto& order : {std::vector<int>{0, 1, 2}, std::vector<int>{2, 1, 0}}) {
+    auto combined = makeComp(100, universe);
+    for (int index : order) {
+      auto separate = makeComp(100, universe);
+      separate.colocTest(100, 0.0, "single", clusters[index]);
+      combined.colocTest(100, 0.0, "combined", clusters[index]);
+      REQUIRE_NEAR(combined.getpValue(), separate.getpValue(), 1e-12);
+      REQUIRE(combined.getSharedGeneIdsInCluster() == separate.getSharedGeneIdsInCluster());
+      REQUIRE(combined.getClusterSize() == separate.getClusterSize());
+      REQUIRE(combined.getNumSharedGenesInUniverse() == 5);
+    }
+  }
+}
+
+TEST_CASE("colocTest: empty cluster clears a previous significant result") {
+  auto mc = makeComp(100, {1, 2, 3, 4, 5});
+  mc.colocTest(100, 0.0, "enriched", {1, 2, 3, 4, 5});
+  REQUIRE(mc.getpValue() < 0.05);
+
+  mc.colocTest(100, 0.0, "empty", {});
+  REQUIRE_NEAR(mc.getpValue(), 1.0, 1e-12);
+  REQUIRE(mc.getSharedGeneIdsInCluster().empty());
+  REQUIRE(mc.getClusterSize() == 0);
+  REQUIRE(mc.getNumSharedGenesInUniverse() == 5);
+}
+
+TEST_CASE("colocTest: empty background clears a previous significant result") {
+  for (bool noPairGenes : {false, true}) {
+    auto mc = makeComp(100, {1, 2, 3, 4, 5});
+    mc.colocTest(100, 0.0, "enriched", {1, 2, 3, 4, 5});
+    REQUIRE(mc.getpValue() < 0.05);
+
+    if (noPairGenes) mc.setUniverseGenesForTest({});
+    mc.colocTest(noPairGenes ? 100 : 0, 0.0, "next", {1, 2});
+    REQUIRE_NEAR(mc.getpValue(), 1.0, 1e-12);
+    REQUIRE(mc.getSharedGeneIdsInCluster().empty());
+    REQUIRE(mc.getClusterSize() == 2);
+  }
 }
 
 TEST_CASE("colocTest: maximum overlap (k = min(n, K)) → smallest p-value") {
